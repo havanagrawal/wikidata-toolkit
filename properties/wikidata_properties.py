@@ -1,3 +1,13 @@
+"""High-level wrapper for Wikidata Properties
+
+    Each instance of Wikidata Property has an ID which corresponds to the true
+    Wikidata property ID, and a human-readable name.
+
+    This module also exports some commonly used properties as constants.
+
+    todo(havanagrawal): Support autogeneration of constants in this file
+"""
+
 class WikidataProperty():
     def __init__(self, pid, name=None):
         if not pid.startswith('P'):
@@ -5,7 +15,7 @@ class WikidataProperty():
         try:
             int(pid[1:])
         except ValueError:
-            raise ValueError('Properties must be of the format P<number>')
+            raise ValueError('Properties must be of the format P####')
 
         self._pid = pid
         self._name = name
@@ -36,7 +46,8 @@ DIRECTOR = WikidataProperty('P57', 'director')
 SEASON = WikidataProperty('P4908', 'season')
 NUMBER_OF_EPISODES = WikidataProperty('P1113', 'number of episodes')
 HAS_PART = WikidataProperty('P527', 'has part')
-
+IMDB_ID = WikidataProperty('P345', 'IMDb ID')
+DURATION = WikidataProperty('P2047', 'duration')
 FOLLOWS = WikidataProperty('P155', 'follows')
 FOLLOWED_BY = WikidataProperty('P156', 'followed by')
 

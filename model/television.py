@@ -1,7 +1,9 @@
+"""Wrapper classes for high-level concepts relating to TV series"""
+
 from functools import partial
 
 from constraints import has_property, inherits_property
-import model.wikidata_properties as wp
+import properties.wikidata_properties as wp
 
 class BaseType():
     def __init__(self, itempage, repo):
@@ -58,6 +60,8 @@ class Episode(BaseType):
             wp.DIRECTOR,
             wp.FOLLOWS,
             wp.FOLLOWED_BY,
+            wp.DURATION,
+            wp.IMDB_ID,
         )]
 
     def _inheritance_constraints(self):

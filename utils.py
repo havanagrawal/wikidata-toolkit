@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from pywikibot import Claim
-import model.wikidata_properties as wp
+import properties.wikidata_properties as wp
 
 class RepoUtils():
     def __init__(self, repo):

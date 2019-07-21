@@ -1,8 +1,19 @@
+"""Constraint abstract definition and implementations"""
+
 from typing import Callable
-from model.wikidata_properties import WikidataProperty
+from properties.wikidata_properties import WikidataProperty
 from utils import RepoUtils
 
 class Constraint():
+    """A constraint on data consistency/quality
+
+        A constraint has two parts: a validator and a fixer
+        The validator verifies if the constraint is satisfied or not,
+        and the fixer can attempt to make the data satisfy the constraint.
+
+        In principle, this is very similar to how Wikidata validates constraints,
+        but allows for a simpler and more extensible programmatic model.
+    """
     def __init__(self, validator:Callable[..., bool], fixer:Callable[..., None]=None, name=None):
         self._validator = validator
         self._name = name
@@ -24,12 +35,19 @@ class Constraint():
         return self.__str__()
 
 def has_property(property: WikidataProperty):
+    """Constraint for 'item has a certain property'"""
     def inner(item):
         return property.pid in item.itempage.claims
 
     return Constraint(validator=inner, name=f"has_property({property.name})")
 
 def inherits_property(property: WikidataProperty):
+    """Constraint for 'item inherits property from parent item'
+
+        The definition of a "parent" depends on the item itself. For example,
+        the parent item of an Episode is a Season, and the episode is
+        expected to inherit properties such as country of origin (P495)
+    """
     @item_has_parent
     def inner_check(item):
         item_claims = item.itempage.claims

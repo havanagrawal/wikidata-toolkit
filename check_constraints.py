@@ -54,20 +54,25 @@ def validate_constraints(item_ids, print_failures_only=True, autofix=False):
     repo = Site('wikidata', 'wikidata').data_repository()
     factory = Factory(repo)
 
+    total_failures = 0
+    total = 0
+
     for item_id in item_ids:
         typed_item = factory.get_typed_item(item_id)
         satisfied, not_satisfied = validate_constraints_for_item(typed_item, factory)
+        total_failures += len(not_satisfied)
+        total += len(satisfied) + len(not_satisfied)
 
         print_failures(typed_item, not_satisfied)
         if autofix:
             for failed_constraint in not_satisfied:
                 failed_constraint.fix(typed_item)
 
-        print()
         if print_failures_only:
             continue
         print_successes(typed_item, satisfied)
-        print()
+
+    print(f"Found {total_failures}/{total} constraint failures")
 
 if __name__ == "__main__":
     validate_constraints()

@@ -1,7 +1,10 @@
+"""Factory class for generating high-level types from ItemPage instances"""
+
 from pywikibot import ItemPage
 
+from properties.wikidata_properties import INSTANCE_OF, TELEVISION_SERIES_EPISODE, TELEVISION_SERIES_SEASON
 from .television import Episode, Season
-from .wikidata_properties import INSTANCE_OF, TELEVISION_SERIES_EPISODE, TELEVISION_SERIES_SEASON
+
 
 class Factory():
     def __init__(self, repo):
