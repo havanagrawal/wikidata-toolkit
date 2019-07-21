@@ -1,8 +1,12 @@
 """Constraint abstract definition and implementations"""
 
 from typing import Callable
-from properties.wikidata_properties import WikidataProperty
+from pywikibot import Claim
+from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
+
+import properties.wikidata_properties as wp
 from utils import RepoUtils
+from sparql.query_builder import generate_sparql_query
 
 class Constraint():
     """A constraint on data consistency/quality
@@ -25,8 +29,8 @@ class Constraint():
     def fix(self, item):
         if self._fixer is None:
             print(f"No autofix available for {self._name}:{item}")
-            return
-        self._fixer(item)
+            return False
+        return self._fixer(item)
 
     def __str__(self):
         return self._name
@@ -34,14 +38,14 @@ class Constraint():
     def __repr__(self):
         return self.__str__()
 
-def has_property(property: WikidataProperty):
+def has_property(property: wp.WikidataProperty):
     """Constraint for 'item has a certain property'"""
     def inner(item):
         return property.pid in item.itempage.claims
 
     return Constraint(validator=inner, name=f"has_property({property.name})")
 
-def inherits_property(property: WikidataProperty):
+def inherits_property(property: wp.WikidataProperty):
     """Constraint for 'item inherits property from parent item'
 
         The definition of a "parent" depends on the item itself. For example,
@@ -62,6 +66,7 @@ def inherits_property(property: WikidataProperty):
     @item_has_parent
     def inner_fix(item):
         RepoUtils(item.repo).copy(item.parent.itempage, item.itempage, [property])
+        return True
 
     return Constraint(
         inner_check,
@@ -80,3 +85,29 @@ def item_has_parent(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+def follows_something():
+    """Alias for has_property(wp.FOLLOWS), but with an autofix"""
+    def inner_check(item):
+        return wp.FOLLOWS.pid in item.itempage.claims
+
+    def inner_fix(item):
+        # Find the item that has the FOLLOWED_BY field set to this item
+        query = generate_sparql_query({wp.FOLLOWED_BY.pid: item.itempage.title()})
+        gen = WikidataSPARQLPageGenerator(query)
+        is_followed_by = next(gen, None)
+
+        if is_followed_by is None:
+            print(f"autofix for follows_something({item.itempage.title()}) failed")
+            return False
+
+        new_claim = Claim(item.repo, wp.FOLLOWS.pid)
+        new_claim.setTarget(is_followed_by)
+        item.itempage.addClaim(new_claim, summary=f'Setting {wp.FOLLOWS.pid} ({wp.FOLLOWS.name})')
+        return True
+
+    return Constraint(
+        inner_check,
+        name=f"follows_something()",
+        fixer=inner_fix
+    )

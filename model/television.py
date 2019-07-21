@@ -2,7 +2,7 @@
 
 from functools import partial
 
-from constraints import has_property, inherits_property
+from constraints import has_property, inherits_property, follows_something
 import properties.wikidata_properties as wp
 
 class BaseType():
@@ -58,11 +58,10 @@ class Episode(BaseType):
             wp.PRODUCTION_COMPANY,
             wp.PUBLICATION_DATE,
             wp.DIRECTOR,
-            wp.FOLLOWS,
             wp.FOLLOWED_BY,
             wp.DURATION,
             wp.IMDB_ID,
-        )]
+        )] + [follows_something()]
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (

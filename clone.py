@@ -4,11 +4,9 @@ from pywikibot import Site, ItemPage, Claim
 import properties.wikidata_properties as wp
 from utils import RepoUtils
 
-REPO = Site('wikidata', 'wikidata').data_repository()
-
 def clone(src, dest, props: Iterable[wp.WikidataProperty]):
     """Copy all specified properties from the src ID to the dest ID"""
-    repoutil = RepoUtils(REPO)
+    repoutil = RepoUtils(Site().data_repository())
     if not src.startswith('Q'):
         raise ValueError(f"Expected item ID of the format 'Q####', found {src}")
     if not dest.startswith('Q'):

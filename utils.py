@@ -4,7 +4,9 @@ from pywikibot import Claim
 import properties.wikidata_properties as wp
 
 class RepoUtils():
-    def __init__(self, repo):
+    def __init__(self, repo=None):
+        if repo is None:
+            repo = Site().data_repository()
         self.repo = repo
 
     def copy(self, src_item, dest_item, props: Iterable[wp.WikidataProperty]):

@@ -45,17 +45,13 @@ def print_successes(typed_item: BaseType, passed_constraints: List[Constraint]):
     for constraint in passed_constraints:
         print(f"{constraint} passed for {typed_item}")
 
-
-@click.command()
-@click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)
-@click.option('--print-failures-only/--print-all', default=True)
-@click.option('--autofix', is_flag=True, default=False)
 def validate_constraints(item_ids, print_failures_only=True, autofix=False):
-    repo = Site('wikidata', 'wikidata').data_repository()
+    repo = Site().data_repository()
     factory = Factory(repo)
 
     total_failures = 0
     total = 0
+    total_fixed = 0
 
     for item_id in item_ids:
         typed_item = factory.get_typed_item(item_id)
@@ -65,14 +61,25 @@ def validate_constraints(item_ids, print_failures_only=True, autofix=False):
 
         print_failures(typed_item, not_satisfied)
         if autofix:
-            for failed_constraint in not_satisfied:
+            fixed = sum(
                 failed_constraint.fix(typed_item)
+                for failed_constraint in not_satisfied
+            )
+            total_fixed += fixed
 
         if print_failures_only:
             continue
         print_successes(typed_item, satisfied)
 
     print(f"Found {total_failures}/{total} constraint failures")
+    print(f"Fixed {total_fixed}/{total_failures} constraint failures")
+
+@click.command()
+@click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)
+@click.option('--print-failures-only/--print-all', default=True)
+@click.option('--autofix', is_flag=True, default=False)
+def validate_constraints_click(item_ids, print_failures_only=True, autofix=False):
+    validate_constraints(item_ids, print_failures_only, autofix)
 
 if __name__ == "__main__":
-    validate_constraints()
+    validate_constraints_click()
