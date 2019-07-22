@@ -65,7 +65,12 @@ def inherits_property(property: wp.WikidataProperty):
 
     @item_has_parent
     def inner_fix(item):
-        RepoUtils(item.repo).copy(item.parent.itempage, item.itempage, [property])
+        parent_claims = item.parent.itempage.claims
+
+        if property.pid not in parent_claims:
+            return False
+
+        RepoUtils().copy(item.parent.itempage, item.itempage, [property])
         return True
 
     return Constraint(
@@ -109,5 +114,31 @@ def follows_something():
     return Constraint(
         inner_check,
         name=f"follows_something()",
+        fixer=inner_fix
+    )
+
+def is_followed_by_something():
+    """Alias for has_property(wp.FOLLOWS), but with an autofix"""
+    def inner_check(item):
+        return wp.FOLLOWED_BY.pid in item.itempage.claims
+
+    def inner_fix(item):
+        # Find the item that has the FOLLOWS field set to this item
+        query = generate_sparql_query({wp.FOLLOWS.pid: item.itempage.title()})
+        gen = WikidataSPARQLPageGenerator(query)
+        is_followed_by = next(gen, None)
+
+        if is_followed_by is None:
+            print(f"autofix for is_followed_by({item.itempage.title()}) failed")
+            return False
+
+        new_claim = Claim(item.repo, wp.FOLLOWED_BY.pid)
+        new_claim.setTarget(is_followed_by)
+        item.itempage.addClaim(new_claim, summary=f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})')
+        return True
+
+    return Constraint(
+        inner_check,
+        name=f"is_followed_by_something()",
         fixer=inner_fix
     )

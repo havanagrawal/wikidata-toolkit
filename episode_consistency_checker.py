@@ -9,11 +9,17 @@ from check_constraints import validate_constraints
 
 @click.command()
 @click.argument("tvshow_id")
+@click.option("--child_type", type=click.Choice(["episode", "season"]))
 @click.option("--autofix", is_flag=True, default=False)
-def bulk_check(tvshow_id, autofix=False):
+def bulk_check(tvshow_id, child_type="episode", autofix=False):
+    if child_type == "episode":
+        instance_of_type = wp.TELEVISION_SERIES_EPISODE
+    elif child_type == "season":
+        instance_of_type = wp.TELEVISION_SERIES_SEASON
+
     key_val_pairs = {
         wp.PART_OF_THE_SERIES.pid : tvshow_id,
-        wp.INSTANCE_OF.pid : wp.TELEVISION_SERIES_EPISODE
+        wp.INSTANCE_OF.pid : instance_of_type
     }
     query = generate_sparql_query(key_val_pairs)
     print(query)

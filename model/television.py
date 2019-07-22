@@ -2,7 +2,8 @@
 
 from functools import partial
 
-from constraints import has_property, inherits_property, follows_something
+from constraints import has_property, inherits_property
+from constraints import follows_something, is_followed_by_something
 import properties.wikidata_properties as wp
 
 class BaseType():
@@ -61,7 +62,10 @@ class Episode(BaseType):
             wp.FOLLOWED_BY,
             wp.DURATION,
             wp.IMDB_ID,
-        )] + [follows_something()]
+        )] + [
+            follows_something(),
+            is_followed_by_something(),
+        ]
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (
@@ -76,13 +80,17 @@ class Season(BaseType):
         super().__init__(itempage, repo)
 
     @property
+    def parent(self):
+        series_itempage = self._itempage.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
+        return Series(series_itempage, self.repo)
+
+    @property
     def constraints(self):
-        return self._property_constraints()
+        return self._property_constraints() + self._inheritance_constraints()
 
     def _property_constraints(self):
         return [has_property(prop) for prop in (
             wp.INSTANCE_OF,
-            wp.TITLE,
             wp.PART_OF_THE_SERIES,
             wp.ORIGINAL_NETWORK,
             wp.COUNTRY_OF_ORIGIN,
@@ -92,4 +100,31 @@ class Season(BaseType):
             wp.FOLLOWED_BY,
             wp.HAS_PART,
             wp.NUMBER_OF_EPISODES,
+        )]
+
+    def _inheritance_constraints(self):
+        return [inherits_property(prop) for prop in (
+            wp.ORIGINAL_NETWORK,
+            wp.COUNTRY_OF_ORIGIN,
+            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+            wp.PRODUCTION_COMPANY,
+        )]
+
+class Series(BaseType):
+    def __init__(self, itempage, repo):
+        super().__init__(itempage, repo)
+
+    @property
+    def constraints(self):
+        return self._property_constraints()
+
+    def _property_constraints(self):
+        return [has_property(prop) for prop in (
+            wp.INSTANCE_OF,
+            wp.TITLE,
+            wp.ORIGINAL_NETWORK,
+            wp.COUNTRY_OF_ORIGIN,
+            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+            wp.PRODUCTION_COMPANY,
+            wp.IMDB_ID,
         )]
