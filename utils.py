@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from pywikibot import Claim
+from pywikibot import Claim, Site
 import properties.wikidata_properties as wp
 
 class RepoUtils():
@@ -15,12 +15,12 @@ class RepoUtils():
 
         for prop in props:
             if prop.pid not in src_item.claims:
-                print(f"{prop} not found in {src}")
+                print(f"{prop} not found in {src_item.title()}")
                 continue
 
             src_claims = src_item.claims[prop.pid]
             if len(src_claims) > 1:
-                print("Only scalar properties can be copied")
+                print(f"Cannot copy {prop} from {src_item} to {dest_item}. Only scalar properties can be copied")
                 continue
 
             if prop.pid in dest_item.claims:
