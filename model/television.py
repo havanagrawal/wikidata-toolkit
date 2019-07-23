@@ -2,15 +2,19 @@
 
 from functools import partial
 
+from pywikibot import ItemPage, Site
+from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
+
 from constraints import has_property, inherits_property
 from constraints import follows_something, is_followed_by_something
 import properties.wikidata_properties as wp
+from sparql.query_builder import generate_sparql_query
 
 class BaseType():
-    def __init__(self, itempage, repo):
+    def __init__(self, itempage, repo=None):
         self._itempage = itempage
         self._itempage.get()
-        self._repo = repo
+        self._repo = Site().data_repository() if repo is None else repo
 
     @property
     def itempage(self):
@@ -28,6 +32,15 @@ class BaseType():
     def repo(self):
         return self._repo
 
+    @classmethod
+    def from_id(cls, item_id, repo=None):
+        repo = Site().data_repository() if repo is None else repo
+        return cls(ItemPage(repo, item_id), repo)
+
+    @property
+    def claims(self):
+        return self._itempage.claims
+
     def __str__(self):
         return f"{self.__class__.__name__}({self._itempage.title()} ({self.label}))"
 
@@ -35,7 +48,7 @@ class BaseType():
         return self.__str__()
 
 class Episode(BaseType):
-    def __init__(self, itempage, repo):
+    def __init__(self, itempage, repo=None):
         super().__init__(itempage, repo)
 
     @property
@@ -44,8 +57,88 @@ class Episode(BaseType):
 
     @property
     def parent(self):
-        season_itempage = self._itempage.claims[wp.SEASON.pid][0].getTarget()
-        return Season(season_itempage, self.repo)
+        season_itempage = self.claims[wp.SEASON.pid][0].getTarget()
+        return Season(season_itempage)
+
+    @property
+    def next(self):
+        """Return the next episode, if any"""
+        if wp.FOLLOWED_BY.pid in self.claims:
+            next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
+            return Episode(next_episode_itempage)
+
+        ordinal = self.ordinal_in_series
+        if self.ordinal_in_series is not None:
+            return self.next_in_series
+
+        if self.ordinal_in_season is not None:
+            return self.next_in_season
+
+    @property
+    def next_in_season(self):
+        if self.ordinal_in_season is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.SEASON.pid} wd:{self.season}.
+            ?item p:{wp.SEASON.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_season + 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        next_episode_itempage = next(gen, None)
+        if next_episode_itempage is None:
+            return None
+
+        return Episode(next_episode_itempage)
+
+    @property
+    def next_in_series(self):
+        if self.ordinal_in_series is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        next_episode_itempage = next(gen, None)
+        if next_episode_itempage is None:
+            return None
+
+        return Episode(next_episode_itempage)
+
+    @property
+    def part_of_the_series(self):
+        if wp.PART_OF_THE_SERIES.pid not in self.claims:
+            return None
+        return self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget().title()
+
+    @property
+    def season(self):
+        if wp.SEASON.pid not in self.claims:
+            return None
+        return self.claims[wp.SEASON.pid][0].getTarget().title()
+
+    @property
+    def ordinal_in_series(self):
+        if not wp.PART_OF_THE_SERIES.pid in self.claims:
+            return None
+        series_claim = self.claims[wp.PART_OF_THE_SERIES.pid][0]
+        if wp.SERIES_ORDINAL.pid not in series_claim.qualifiers:
+            return None
+
+        return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
+
+    @property
+    def ordinal_in_season(self):
+        if not wp.SEASON.pid in self.claims:
+            return None
+        series_claim = self.claims[wp.SEASON.pid][0]
+        if wp.SERIES_ORDINAL.pid not in series_claim.qualifiers:
+            return None
+
+        return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
+
 
     def _property_constraints(self):
         return [has_property(prop) for prop in (
@@ -76,13 +169,13 @@ class Episode(BaseType):
         )]
 
 class Season(BaseType):
-    def __init__(self, itempage, repo):
+    def __init__(self, itempage, repo=None):
         super().__init__(itempage, repo)
 
     @property
     def parent(self):
-        series_itempage = self._itempage.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
-        return Series(series_itempage, self.repo)
+        series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
+        return Series(series_itempage)
 
     @property
     def constraints(self):
@@ -111,7 +204,7 @@ class Season(BaseType):
         )]
 
 class Series(BaseType):
-    def __init__(self, itempage, repo):
+    def __init__(self, itempage, repo=None):
         super().__init__(itempage, repo)
 
     @property
