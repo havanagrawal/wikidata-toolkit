@@ -94,6 +94,7 @@ class Episode(BaseType):
         if self.ordinal_in_season is None:
             return None
         query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
             ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
             ?item wdt:{wp.SEASON.pid} wd:{self.season}.
             ?item p:{wp.SEASON.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_season + 1}"
@@ -112,6 +113,7 @@ class Episode(BaseType):
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
             ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
             }}
@@ -169,7 +171,6 @@ class Episode(BaseType):
             wp.PRODUCTION_COMPANY,
             wp.PUBLICATION_DATE,
             wp.DIRECTOR,
-            wp.FOLLOWED_BY,
             wp.DURATION,
             wp.IMDB_ID,
         )] + [
@@ -187,6 +188,15 @@ class Episode(BaseType):
 
 class Season(BaseType):
     """Encapsulates an item of instance 'television series season'"""
+    def __init__(self, itempage, repo=None):
+        super(Season, self).__init__(itempage, repo)
+        if wp.INSTANCE_OF.pid not in itempage.claims:
+            raise ValueError(f"'instance of' unset. Must be set to 'television series season' for {itempage.title()}")
+        instance_of = itempage.claims[wp.INSTANCE_OF.pid][0].getTarget().title()
+        if instance_of != wp.TELEVISION_SERIES_SEASON:
+            raise ValueError(f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}")
+
+
     @property
     def parent(self):
         series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
@@ -215,16 +225,17 @@ class Season(BaseType):
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_SEASON}.
             ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
             }}
         """
         gen = WikidataSPARQLPageGenerator(query)
-        next_episode_itempage = next(gen, None)
-        if next_episode_itempage is None:
+        next_season_itempage = next(gen, None)
+        if next_season_itempage is None:
             return None
 
-        return Season(next_episode_itempage)
+        return Season(next_season_itempage)
 
     @property
     def next(self):
@@ -232,8 +243,8 @@ class Season(BaseType):
 
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
-            next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
-            return Season(next_episode_itempage)
+            next_season_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
+            return Season(next_season_itempage)
 
         # Find the item that has the FOLLOWS field set to this item
         query = generate_sparql_query({wp.FOLLOWS.pid: self.title})
@@ -261,10 +272,10 @@ class Season(BaseType):
             wp.COUNTRY_OF_ORIGIN,
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
             wp.PRODUCTION_COMPANY,
-            wp.FOLLOWS,
             wp.HAS_PART,
             wp.NUMBER_OF_EPISODES,
         )] + [
+            follows_something(),
             is_followed_by_something(),
         ]
 

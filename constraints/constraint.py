@@ -134,7 +134,7 @@ def is_followed_by_something():
             return False
 
         new_claim = Claim(item.repo, wp.FOLLOWED_BY.pid)
-        new_claim.setTarget(is_followed_by)
+        new_claim.setTarget(is_followed_by.itempage)
         item.itempage.addClaim(new_claim, bot=True, summary=f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})')
         return True
 
