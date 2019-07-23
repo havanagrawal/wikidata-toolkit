@@ -210,6 +210,46 @@ class Season(BaseType):
         return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
 
     @property
+    def next_in_series(self):
+        """Return the next Episode from the same series"""
+        if self.ordinal_in_series is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        next_episode_itempage = next(gen, None)
+        if next_episode_itempage is None:
+            return None
+
+        return Season(next_episode_itempage)
+
+    @property
+    def next(self):
+        """Return the next episode, if any"""
+
+        # Check if it has the FOLLOWED_BY field set
+        if wp.FOLLOWED_BY.pid in self.claims:
+            next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
+            return Season(next_episode_itempage)
+
+        # Find the item that has the FOLLOWS field set to this item
+        query = generate_sparql_query({wp.FOLLOWS.pid: self.title})
+        gen = WikidataSPARQLPageGenerator(query)
+        is_followed_by = next(gen, None)
+
+        if is_followed_by is not None:
+            return Season(is_followed_by)
+
+        # Find the item whose ordinal is one higher for this series
+        if self.ordinal_in_series is not None:
+            return self.next_in_series
+
+        return None
+
+    @property
     def constraints(self):
         return self._property_constraints() + self._inheritance_constraints()
 
@@ -222,10 +262,11 @@ class Season(BaseType):
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
             wp.PRODUCTION_COMPANY,
             wp.FOLLOWS,
-            wp.FOLLOWED_BY,
             wp.HAS_PART,
             wp.NUMBER_OF_EPISODES,
-        )]
+        )] + [
+            is_followed_by_something(),
+        ]
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (
