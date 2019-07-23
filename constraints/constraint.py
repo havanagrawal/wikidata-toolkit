@@ -17,8 +17,12 @@ class Constraint():
 
         In principle, this is very similar to how Wikidata validates constraints,
         but allows for a simpler and more extensible programmatic model.
+
+        Note: The fixer should only fix the item under consideration, and not
+              any items referenced by it. This helps keep the script and the
+              developer sane.
     """
-    def __init__(self, validator:Callable[..., bool], fixer:Callable[..., None]=None, name=None):
+    def __init__(self, validator: Callable[..., bool], fixer: Callable[..., None]=None, name=None):
         self._validator = validator
         self._name = name
         self._fixer = fixer
@@ -38,14 +42,14 @@ class Constraint():
     def __repr__(self):
         return self.__str__()
 
-def has_property(property: wp.WikidataProperty):
+def has_property(prop: wp.WikidataProperty):
     """Constraint for 'item has a certain property'"""
     def inner(item):
-        return property.pid in item.itempage.claims
+        return prop.pid in item.claims
 
-    return Constraint(validator=inner, name=f"has_property({property.name})")
+    return Constraint(validator=inner, name=f"has_property({prop.name})")
 
-def inherits_property(property: wp.WikidataProperty):
+def inherits_property(prop: wp.WikidataProperty):
     """Constraint for 'item inherits property from parent item'
 
         The definition of a "parent" depends on the item itself. For example,
@@ -54,47 +58,47 @@ def inherits_property(property: wp.WikidataProperty):
     """
     @item_has_parent
     def inner_check(item):
-        item_claims = item.itempage.claims
-        parent_claims = item.parent.itempage.claims
+        item_claims = item.claims
+        parent_claims = item.parent.claims
 
         return (
-            property.pid in item_claims and
-            property.pid in parent_claims and
-            item_claims[property.pid] == parent_claims[property.pid]
+            prop.pid in item_claims and
+            prop.pid in parent_claims and
+            item_claims[prop.pid] == parent_claims[prop.pid]
         )
 
     @item_has_parent
     def inner_fix(item):
-        parent_claims = item.parent.itempage.claims
+        parent_claims = item.parent.claims
 
-        if property.pid not in parent_claims:
+        if prop.pid not in parent_claims:
             return False
 
-        RepoUtils().copy(item.parent.itempage, item.itempage, [property])
+        RepoUtils().copy(item.parent.itempage, item.itempage, [prop])
         return True
 
     return Constraint(
         inner_check,
-        name=f"inherits_property({property.name})",
+        name=f"inherits_property({prop.name})",
         fixer=inner_fix
     )
 
 def item_has_parent(func):
     def wrapper(*args, **kwargs):
         item = args[0]
-        item_has_parent = item.parent is not None
-        if not item_has_parent:
+        has_parent = item.parent is not None
+        if not has_parent:
             print(f"{item} has no concept of parent")
-            return noop
-        else:
-            return func(*args, **kwargs)
+            return None
+
+        return func(*args, **kwargs)
 
     return wrapper
 
 def follows_something():
     """Alias for has_property(wp.FOLLOWS), but with an autofix"""
     def inner_check(item):
-        return wp.FOLLOWS.pid in item.itempage.claims
+        return wp.FOLLOWS.pid in item.claims
 
     def inner_fix(item):
         # Find the item that has the FOLLOWED_BY field set to this item
@@ -103,7 +107,7 @@ def follows_something():
         is_followed_by = next(gen, None)
 
         if is_followed_by is None:
-            print(f"autofix for follows_something({item.itempage.title()}) failed")
+            print(f"autofix for follows_something({item.title}) failed")
             return False
 
         new_claim = Claim(item.repo, wp.FOLLOWS.pid)
@@ -118,23 +122,20 @@ def follows_something():
     )
 
 def is_followed_by_something():
-    """Alias for has_property(wp.FOLLOWS), but with an autofix"""
+    """Alias for has_property(wp.FOLLOWED_BY), but with an autofix"""
     def inner_check(item):
-        return wp.FOLLOWED_BY.pid in item.itempage.claims
+        return wp.FOLLOWED_BY.pid in item.claims
 
     def inner_fix(item):
-        # Find the item that has the FOLLOWS field set to this item
-        query = generate_sparql_query({wp.FOLLOWS.pid: item.itempage.title()})
-        gen = WikidataSPARQLPageGenerator(query)
-        is_followed_by = next(gen, None)
+        is_followed_by = item.next
 
         if is_followed_by is None:
-            print(f"autofix for is_followed_by({item.itempage.title()}) failed")
+            print(f"autofix for is_followed_by({item.title}) failed")
             return False
 
         new_claim = Claim(item.repo, wp.FOLLOWED_BY.pid)
         new_claim.setTarget(is_followed_by)
-        item.itempage.addClaim(new_claim, summary=f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})')
+        item.itempage.addClaim(new_claim, bot=True, summary=f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})')
         return True
 
     return Constraint(
