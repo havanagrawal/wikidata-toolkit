@@ -228,7 +228,7 @@ class Season(BaseType):
 
     @property
     def next(self):
-        """Return the next episode, if any"""
+        """Return the next season, if any"""
 
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
