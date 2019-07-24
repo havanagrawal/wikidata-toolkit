@@ -89,7 +89,7 @@ def item_has_parent(func):
         has_parent = item.parent is not None
         if not has_parent:
             print(f"{item} has no concept of parent")
-            return None
+            return False
 
         return func(*args, **kwargs)
 
