@@ -1,36 +1,18 @@
 # The Wikidata Toolkit
 
+## Table of Contents
+
+1. [Introduction](#introduction)
+2. [Design](#design)
+3. [Usage](#usage)
+    1. [Pre-Requisites](#pre-requisites)
+    1. [Sample Commands](#sample-commands)
+
 ## Introduction
 
 This repo contains a few utility scripts that fix consistency issues and missing data on Wikidata, focusing on TV series.
 
 It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot).
-
-## Organization
-
-```
-.
-├── __init__.py
-├── check_constraints.py
-├── clone.py
-├── constraints
-│   ├── __init__.py
-│   └── constraint.py
-├── episode_consistency_checker.py
-├── model
-│   ├── __init__.py
-│   ├── factory.py
-│   └── television.py
-├── properties
-│   ├── __init__.py
-│   └── wikidata_properties.py
-├── sparql
-│   ├── __init__.py
-│   └── query_builder.py
-├── user-config.py
-├── user-password.py
-└── utils.py
-```
 
 ## Design
 
@@ -46,7 +28,7 @@ The various scripts (currently at root level) use a SPARQL query to find an item
 
 ### Pre-Requisites
 
-In order to run the scripts, you need to [create a Bot account](https://www.wikidata.org/w/index.php?title=Special:CreateAccount&returnto=Wikidata%3ABots) on Wikidata. Bot names usually end with the suffix "Bot". Once you have the appropriate credentials, create the following files:
+In order to run the scripts, you need to [create a Bot account]() on Wikidata. Bot names usually end with the suffix "Bot". Once you have the appropriate credentials, create the following files:
 
 [`user-config.py`](https://www.mediawiki.org/wiki/Manual:Pywikibot/user-config.py)
 
