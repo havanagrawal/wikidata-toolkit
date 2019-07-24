@@ -94,3 +94,4 @@ python3 episode_consistency_checker.py Q18605540 \
 ## TODO
 
  * [ ] There must be a sub-library in pywikibot that performs the same functionality as [WikidataProperty](https://github.com/havanagrawal/wikidata-toolkit/blob/master/properties/wikidata_properties.py#L11). If not, find a way to auto-generate the Python3 file
+ * [ ] Use logging in place of print statements
