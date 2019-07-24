@@ -3,6 +3,7 @@
 ## Table of Contents
 
 1. [Introduction](#introduction)
+1. [Why Television Series?](#why-television-series)
 2. [Design](#design)
 3. [Usage](#usage)
     1. [Pre-Requisites](#pre-requisites)
@@ -14,6 +15,14 @@
 This repo contains a few utility scripts that fix consistency issues and missing data on Wikidata, focusing on TV series.
 
 It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot). Check out its [contributions](https://www.wikidata.org/wiki/Special:Contributions/TheFireBenderBot) to get an idea of what it specializes at.
+
+## Why Television Series?
+
+As part of working with the OMDB API, I discovered gaps in the results such as missing episodes. [Some replies](https://github.com/omdbapi/OMDb-API/issues/88#issuecomment-413684586) on the issues revealed that they use Wikidata as a backend, which led me to explore Wikidata itself.
+
+In the future, this repo may evolve to encompass more cultural genres such as movies and books.
+
+In general, Wikidata is an incredibly useful open-source data source, and any contribution to the service can have a large, positive impact on all downstream users, including academic projects and research.
 
 ## Design
 
