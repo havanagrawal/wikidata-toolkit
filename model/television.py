@@ -58,7 +58,11 @@ class Episode(BaseType):
     @property
     def parent(self):
         """Return the Season of this Episode"""
+        if wp.SEASON.pid not in self.claims:
+            return None
         season_itempage = self.claims[wp.SEASON.pid][0].getTarget()
+        if season_itempage is None:
+            return None
         return Season(season_itempage)
 
     @property
@@ -240,7 +244,6 @@ class Season(BaseType):
     @property
     def next(self):
         """Return the next season, if any"""
-
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
             next_season_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
