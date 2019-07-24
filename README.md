@@ -7,12 +7,13 @@
 3. [Usage](#usage)
     1. [Pre-Requisites](#pre-requisites)
     1. [Sample Commands](#sample-commands)
+4. [TODO](#todo)
 
 ## Introduction
 
 This repo contains a few utility scripts that fix consistency issues and missing data on Wikidata, focusing on TV series.
 
-It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot).
+It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot). Check out its [contributions](https://www.wikidata.org/wiki/Special:Contributions/TheFireBenderBot) to get an idea of what it specializes at.
 
 ## Design
 
@@ -28,7 +29,7 @@ The various scripts (currently at root level) use a SPARQL query to find an item
 
 ### Pre-Requisites
 
-In order to run the scripts, you need to [create a Bot account]() on Wikidata. Bot names usually end with the suffix "Bot". Once you have the appropriate credentials, create the following files:
+In order to run the scripts, you need to [create a Bot account](https://www.wikidata.org/wiki/Wikidata:Creating_a_bot) on Wikidata. Bot names usually end with the suffix "Bot". Once you have the appropriate credentials, create the following files:
 
 [`user-config.py`](https://www.mediawiki.org/wiki/Manual:Pywikibot/user-config.py)
 
@@ -80,3 +81,7 @@ python3 episode_consistency_checker.py Q18605540 \
     --child_type=season \
     --autofix
 ```
+
+## TODO
+
+ * [ ] There must be a sub-library in pywikibot that performs the same functionality as [WikidataProperty](https://github.com/havanagrawal/wikidata-toolkit/blob/master/properties/wikidata_properties.py#L11). If not, find a way to auto-generate the Python3 file
