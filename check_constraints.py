@@ -5,32 +5,13 @@ from pywikibot import Site
 
 from model import Factory, BaseType
 from constraints import Constraint
-
-class WikidataItemId(click.ParamType):
-    name = "WikidataItemId"
-
-    def convert(self, value, param, ctx):
-        if len(value) == 0:
-            self.fail(f"Expected non-empty item ID", param, ctx)
-        fail_msg = f'Expected item ID of format Q......, got {value}'
-        if value[0].upper() != 'Q':
-            self.fail(fail_msg, param, ctx)
-        if len(value[1:]) == 0:
-            self.fail(fail_msg, param, ctx)
-        try:
-            code = int(value[1:])
-        except TypeError:
-            self.fail(fail_msg, param, ctx)
-        return value
-
-WIKIDATA_ITEM_ID_TYPE = WikidataItemId()
+from properties.wikidata_item import WikidataItemId
 
 def validate_constraints_for_item(typed_item: BaseType, factory: Factory, autofix=False):
     satisfied = []
     not_satisfied = []
     for constraint in typed_item.constraints:
-        is_constraint_satisfied = constraint.validate(typed_item)
-        if is_constraint_satisfied:
+        if constraint.validate(typed_item):
             satisfied.append(constraint)
         else:
             not_satisfied.append(constraint)
@@ -73,6 +54,16 @@ def validate_constraints(item_ids, print_failures_only=True, autofix=False):
 
     print(f"Found {total_failures}/{total} constraint failures")
     print(f"Fixed {total_fixed}/{total_failures} constraint failures")
+
+class WikidataItemIdType(click.ParamType):
+    def convert(self, value, param, ctx):
+        item_id = None
+        try:
+            return str(WikidataItemId(value))
+        except ValueError as e:
+            self.fail(str(e), param, ctx)
+
+WIKIDATA_ITEM_ID_TYPE = WikidataItemIdType()
 
 @click.command()
 @click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)
