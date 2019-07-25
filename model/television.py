@@ -219,7 +219,6 @@ class Season(BaseType):
         if instance_of != wp.TELEVISION_SERIES_SEASON:
             raise ValueError(f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}")
 
-
     @property
     def parent(self):
         series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
@@ -296,10 +295,9 @@ class Season(BaseType):
             wp.PRODUCTION_COMPANY,
             wp.HAS_PART,
             wp.NUMBER_OF_EPISODES,
-        )] + [
-            follows_something(),
-            is_followed_by_something(),
-        ]
+            wp.FOLLOWS,
+            wp.FOLLOWED_BY,
+        )]
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (
