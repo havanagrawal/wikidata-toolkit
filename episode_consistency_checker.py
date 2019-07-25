@@ -23,7 +23,6 @@ def bulk_check(tvshow_id, child_type="episode", autofix=False):
         wp.INSTANCE_OF.pid : instance_of_type
     }
     query = generate_sparql_query(key_val_pairs)
-    print(query)
     gen = WikidataSPARQLPageGenerator(query)
     episode_item_ids = (x.title() for x in gen)
     validate_constraints(episode_item_ids, autofix=autofix)

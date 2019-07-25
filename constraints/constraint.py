@@ -74,8 +74,8 @@ def inherits_property(prop: wp.WikidataProperty):
         if prop.pid not in parent_claims:
             return False
 
-        RepoUtils().copy(item.parent.itempage, item.itempage, [prop])
-        return True
+        _, failures = RepoUtils().copy(item.parent.itempage, item.itempage, [prop])
+        return failures == 0
 
     return Constraint(
         inner_check,
