@@ -57,18 +57,16 @@ class Episode(BaseType):
 
     @property
     def parent(self):
-        """Return the Season of this Episode"""
-        if wp.SEASON.pid not in self.claims:
-            return None
-        season_itempage = self.claims[wp.SEASON.pid][0].getTarget()
-        if season_itempage is None:
-            return None
-        return Season(season_itempage)
+        """Return the Season/Series of this Episode"""
+        if self.season_itempage is None:
+            if self.series_itempage is None:
+                return None
+            return Series(self.series_itempage)
+        return Season(self.season_itempage)
 
     @property
     def next(self):
         """Return the next episode, if any"""
-
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
             next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
@@ -130,18 +128,39 @@ class Episode(BaseType):
         return Episode(next_episode_itempage)
 
     @property
-    def part_of_the_series(self):
-        """The ID of the series of which this episode is a part"""
+    def series_itempage(self):
         if wp.PART_OF_THE_SERIES.pid not in self.claims:
             return None
-        return self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget().title()
+        series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
+        if series_itempage is None:
+            return None
+        series_itempage.get()
+        return series_itempage
+
+    @property
+    def part_of_the_series(self):
+        """The ID of the series of which this episode is a part"""
+        if self.series_itempage is None:
+            return None
+        return self.series_itempage.title()
+
+    @property
+    def season_itempage(self):
+        """The itempage of the season of which this episode is a part"""
+        if wp.SEASON.pid not in self.claims:
+            return None
+        season_itempage = self.claims[wp.SEASON.pid][0].getTarget()
+        if season_itempage is None:
+            return None
+        season_itempage.get()
+        return season_itempage
 
     @property
     def season(self):
         """The ID of the season of which this episode is a part"""
-        if wp.SEASON.pid not in self.claims:
+        if self.season_itempage is None:
             return None
-        return self.claims[wp.SEASON.pid][0].getTarget().title()
+        return self.season_itempage.title()
 
     @property
     def ordinal_in_series(self):
