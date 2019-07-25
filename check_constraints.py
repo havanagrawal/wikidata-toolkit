@@ -6,6 +6,7 @@ from pywikibot import Site
 from model import Factory, BaseType
 from constraints import Constraint
 from properties.wikidata_item import WikidataItemId
+from click_utils import WIKIDATA_ITEM_ID_TYPE
 
 def validate_constraints_for_item(typed_item: BaseType, factory: Factory, autofix=False):
     satisfied = []
@@ -54,16 +55,6 @@ def validate_constraints(item_ids, print_failures_only=True, autofix=False):
 
     print(f"Found {total_failures}/{total} constraint failures")
     print(f"Fixed {total_fixed}/{total_failures} constraint failures")
-
-class WikidataItemIdType(click.ParamType):
-    def convert(self, value, param, ctx):
-        item_id = None
-        try:
-            return str(WikidataItemId(value))
-        except ValueError as e:
-            self.fail(str(e), param, ctx)
-
-WIKIDATA_ITEM_ID_TYPE = WikidataItemIdType()
 
 @click.command()
 @click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)

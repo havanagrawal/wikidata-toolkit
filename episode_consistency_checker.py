@@ -6,9 +6,10 @@ from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 from sparql.query_builder import generate_sparql_query
 import properties.wikidata_properties as wp
 from check_constraints import validate_constraints
+from click_utils import WIKIDATA_ITEM_ID_TYPE
 
 @click.command()
-@click.argument("tvshow_id")
+@click.argument("tvshow_id", type=WIKIDATA_ITEM_ID_TYPE)
 @click.option("--child_type", type=click.Choice(["episode", "season"]))
 @click.option("--autofix", is_flag=True, default=False)
 def bulk_check(tvshow_id, child_type="episode", autofix=False):
