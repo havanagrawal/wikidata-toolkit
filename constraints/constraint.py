@@ -61,10 +61,17 @@ def inherits_property(prop: wp.WikidataProperty):
         item_claims = item.claims
         parent_claims = item.parent.claims
 
+        if prop.pid not in item_claims or prop.pid not in parent_claims:
+            return False
+
+        this_item_prop = item_claims[prop.pid][0].getTarget()
+        parent_item_prop = parent_claims[prop.pid][0].getTarget()
+
+        this_item_prop.get()
+        parent_item_prop.get()
+
         return (
-            prop.pid in item_claims and
-            prop.pid in parent_claims and
-            item_claims[prop.pid] == parent_claims[prop.pid]
+            this_item_prop.title() == parent_item_prop.title()
         )
 
     @item_has_parent
