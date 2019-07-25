@@ -64,15 +64,13 @@ def inherits_property(prop: wp.WikidataProperty):
         if prop.pid not in item_claims or prop.pid not in parent_claims:
             return False
 
-        this_item_prop = item_claims[prop.pid][0].getTarget()
-        parent_item_prop = parent_claims[prop.pid][0].getTarget()
+        item_targets = [claim.getTarget() for claim in item_claims[prop.pid]]
+        parent_targets = [claim.getTarget() for claim in parent_claims[prop.pid]]
 
-        this_item_prop.get()
-        parent_item_prop.get()
+        item_titles = {t.title() for t in item_targets}
+        parent_titles = {t.title() for t in parent_targets}
 
-        return (
-            this_item_prop.title() == parent_item_prop.title()
-        )
+        return item_titles == parent_titles
 
     @item_has_parent
     def inner_fix(item):
