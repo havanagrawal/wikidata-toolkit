@@ -106,17 +106,14 @@ def follows_something():
         return wp.FOLLOWS.pid in item.claims
 
     def inner_fix(item):
-        # Find the item that has the FOLLOWED_BY field set to this item
-        query = generate_sparql_query({wp.FOLLOWED_BY.pid: item.itempage.title()})
-        gen = WikidataSPARQLPageGenerator(query)
-        is_followed_by = next(gen, None)
+        follows = item.previous
 
-        if is_followed_by is None:
+        if follows is None:
             print(f"autofix for follows_something({item.title}) failed")
             return False
 
         new_claim = Claim(item.repo, wp.FOLLOWS.pid)
-        new_claim.setTarget(is_followed_by)
+        new_claim.setTarget(follows.itempage)
         item.itempage.addClaim(new_claim, summary=f'Setting {wp.FOLLOWS.pid} ({wp.FOLLOWS.name})')
         return True
 

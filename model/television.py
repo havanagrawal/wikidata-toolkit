@@ -43,6 +43,9 @@ class BaseType():
     def claims(self):
         return self._itempage.claims
 
+    def refresh(self):
+        self._itempage.get()
+
     def __str__(self):
         return f"{self.__class__.__name__}({self.title} ({self.label}))"
 
@@ -91,6 +94,50 @@ class Episode(BaseType):
         return None
 
     @property
+    def previous(self):
+        """Return the previous episode, if any"""
+        # Check if it has the FOLLOWS field set
+        if wp.FOLLOWS.pid in self.claims:
+            previous_episode_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
+            return Episode(previous_episode_itempage)
+
+        # Find the item that has the FOLLOWED_BY field set to this item
+        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.title})
+        gen = WikidataSPARQLPageGenerator(query)
+        follows = next(gen, None)
+
+        if follows is not None:
+            return Episode(follows)
+
+        # Find the item whose ordinal is one lower for this series
+        if self.ordinal_in_series is not None:
+            return self.previous_in_series
+
+        # Find the item whose ordinal is one lower for this season
+        if self.ordinal_in_season is not None:
+            return self.previous_in_season
+
+        return None
+
+    @property
+    def previous_in_season(self):
+        if self.ordinal_in_season is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.SEASON.pid} wd:{self.season}.
+            ?item p:{wp.SEASON.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_season - 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        previous_episode_itempage = next(gen, None)
+        if previous_episode_itempage is None:
+            return None
+
+        return Episode(previous_episode_itempage)
+
+    @property
     def next_in_season(self):
         """Return the next Episode from the same season"""
         if self.ordinal_in_season is None:
@@ -108,6 +155,24 @@ class Episode(BaseType):
             return None
 
         return Episode(next_episode_itempage)
+
+    @property
+    def previous_in_series(self):
+        """Return the next Episode from the same series"""
+        if self.ordinal_in_series is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series - 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        previous_episode_itempage = next(gen, None)
+        if previous_episode_itempage is None:
+            return None
+
+        return Episode(previous_episode_itempage)
 
     @property
     def next_in_series(self):
@@ -243,7 +308,7 @@ class Season(BaseType):
 
     @property
     def next_in_series(self):
-        """Return the next Episode from the same series"""
+        """Return the next season from the same series"""
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -258,6 +323,24 @@ class Season(BaseType):
             return None
 
         return Season(next_season_itempage)
+
+    @property
+    def previous_in_series(self):
+        """Return the previous season from the same series"""
+        if self.ordinal_in_series is None:
+            return None
+        query = f"""SELECT ?item WHERE {{
+            ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_SEASON}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series - 1}"
+            }}
+        """
+        gen = WikidataSPARQLPageGenerator(query)
+        previous_season_itempage = next(gen, None)
+        if previous_season_itempage is None:
+            return None
+
+        return Season(previous_season_itempage)
 
     @property
     def next(self):
@@ -278,6 +361,28 @@ class Season(BaseType):
         # Find the item whose ordinal is one higher for this series
         if self.ordinal_in_series is not None:
             return self.next_in_series
+
+        return None
+
+    @property
+    def previous(self):
+        """Return the previous season, if any"""
+        # Check if it has the FOLLOWS field set
+        if wp.FOLLOWS.pid in self.claims:
+            previous_season_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
+            return Season(previous_season_itempage)
+
+        # Find the item that has the FOLLOWED_BY field set to this item
+        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.title})
+        gen = WikidataSPARQLPageGenerator(query)
+        follows = next(gen, None)
+
+        if follows is not None:
+            return Season(follows)
+
+        # Find the item whose ordinal is one lower for this series
+        if self.ordinal_in_series is not None:
+            return self.previous_in_series
 
         return None
 
