@@ -8,7 +8,6 @@
 3. [Usage](#usage)
     1. [Pre-Requisites](#pre-requisites)
     1. [Sample Commands](#sample-commands)
-4. [TODO](#todo)
 
 ## Introduction
 
