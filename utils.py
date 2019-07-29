@@ -33,7 +33,8 @@ class RepoUtils():
 
             src_claims = src_item.claims[prop.pid]
             if len(src_claims) > 1:
-                copy_multiple = click.confirm(f"There are {len(src_claims)} values for {prop}. Are you sure you want to copy all of them?")
+                #copy_multiple = click.confirm(f"There are {len(src_claims)} values for {prop}. Are you sure you want to copy all of them?")
+                copy_multiple = False
                 if not copy_multiple:
                     print(f"Cannot copy {prop} from {format(src_item)} to {format(dest_item)}. Only scalar properties can be copied")
                     failures += 1
