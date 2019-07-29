@@ -84,8 +84,8 @@ def inherits_property(prop: wp.WikidataProperty):
 
     return Constraint(
         inner_check,
-        name=f"inherits_property({prop.name})",
-        fixer=inner_fix
+        fixer=inner_fix,
+        name=f"inherits_property({prop.name})"
     )
 
 def item_has_parent(func):
@@ -119,8 +119,8 @@ def follows_something():
 
     return Constraint(
         inner_check,
-        name=f"follows_something()",
-        fixer=inner_fix
+        fixer=inner_fix,
+        name=f"follows_something()"
     )
 
 def is_followed_by_something():
@@ -142,6 +142,44 @@ def is_followed_by_something():
 
     return Constraint(
         inner_check,
-        name=f"is_followed_by_something()",
-        fixer=inner_fix
+        fixer=inner_fix,
+        name=f"is_followed_by_something()"
+    )
+
+def season_has_no_of_episodes_as_count_of_parts():
+    def inner_check(item):
+        return (
+            wp.HAS_PART.pid in item.claims and
+            wp.NUMBER_OF_EPISODES.pid in item.claims and
+            len(item.claims[wp.HAS_PART.pid]) == int(item.claims[wp.NUMBER_OF_EPISODES.pid][0].getTarget().amount)
+        )
+
+    def inner_fix(item):
+        return False
+
+    return Constraint(
+        inner_check,
+        fixer=inner_fix,
+        name=f"season_has_no_of_episodes_as_count_of_parts()",
+    )
+
+def season_has_parts():
+    def inner_check(item):
+        return wp.HAS_PART.pid in item.claims
+
+    def inner_fix(item):
+        for ordinal, episode in item.parts:
+            qualifier = Claim(item.repo, wp.SERIES_ORDINAL.pid)
+            qualifier.setTarget(str(ordinal))
+
+            new_claim = Claim(item.repo, wp.HAS_PART.pid)
+            new_claim.setTarget(episode.itempage)
+            new_claim.addQualifier(qualifier)
+            item.itempage.addClaim(new_claim, summary=f'Adding {episode.title} to {wp.HAS_PART.pid}')
+        return True
+
+    return Constraint(
+        inner_check,
+        fixer=inner_fix,
+        name=f"season_has_parts()",
     )

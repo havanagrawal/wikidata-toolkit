@@ -3,10 +3,10 @@
 from pywikibot import ItemPage, Site
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
-from constraints import has_property, inherits_property
-from constraints import follows_something, is_followed_by_something
+from constraints import *
 import properties.wikidata_properties as wp
 from sparql.query_builder import generate_sparql_query
+import sparql.queries as Q
 
 class BaseType():
     def __init__(self, itempage, repo=None):
@@ -387,6 +387,11 @@ class Season(BaseType):
         return None
 
     @property
+    def parts(self):
+        for ordinal, episode_id, _ in Q.episodes(self.title):
+            yield ordinal, Episode(ItemPage(self.repo, episode_id))
+
+    @property
     def constraints(self):
         return self._property_constraints() + self._inheritance_constraints()
 
@@ -402,7 +407,10 @@ class Season(BaseType):
             wp.NUMBER_OF_EPISODES,
             wp.FOLLOWS,
             wp.FOLLOWED_BY,
-        )]
+        )] + [
+            season_has_no_of_episodes_as_count_of_parts(),
+            season_has_parts(),
+        ]
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (

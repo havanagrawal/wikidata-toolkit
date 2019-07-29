@@ -1,15 +1,14 @@
 """Factory class for generating high-level types from ItemPage instances"""
 
-from pywikibot import ItemPage
+from pywikibot import Site, ItemPage
 
-from properties.wikidata_properties import INSTANCE_OF, TELEVISION_SERIES_EPISODE, TELEVISION_SERIES_SEASON
-from .television import Episode, Season
-
+from properties.wikidata_properties import INSTANCE_OF, TELEVISION_SERIES_EPISODE, TELEVISION_SERIES_SEASON, TELEVISION_SERIES
+from .television import Episode, Season, Series
 
 class Factory():
-    def __init__(self, repo):
+    def __init__(self, repo=None):
         if repo is None:
-            raise ValueError("repo cannot be None")
+            repo = Site().data_repository()
         self.repo = repo
 
     def get_typed_item(self, item_id):
@@ -24,5 +23,7 @@ class Factory():
             return Episode(item_page, self.repo)
         elif instance_id == TELEVISION_SERIES_SEASON:
             return Season(item_page, self.repo)
+        elif instance_id == TELEVISION_SERIES:
+            return Series(item_page, self.repo)
 
         raise ValueError(f"Unsupported item of type {item_type}")
