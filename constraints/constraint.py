@@ -168,6 +168,8 @@ def season_has_parts():
         return wp.HAS_PART.pid in item.claims
 
     def inner_fix(item):
+        added = False
+
         for ordinal, episode in item.parts:
             qualifier = Claim(item.repo, wp.SERIES_ORDINAL.pid)
             qualifier.setTarget(str(ordinal))
@@ -176,7 +178,9 @@ def season_has_parts():
             new_claim.setTarget(episode.itempage)
             new_claim.addQualifier(qualifier)
             item.itempage.addClaim(new_claim, summary=f'Adding {episode.title} to {wp.HAS_PART.pid}')
-        return True
+
+            added = True
+        return added
 
     return Constraint(
         inner_check,
