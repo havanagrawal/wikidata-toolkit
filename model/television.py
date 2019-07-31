@@ -272,6 +272,7 @@ class Episode(BaseType):
             wp.COUNTRY_OF_ORIGIN,
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
             wp.PRODUCTION_COMPANY,
+            wp.PART_OF_THE_SERIES,
         )]
 
 class Season(BaseType):
@@ -388,7 +389,7 @@ class Season(BaseType):
 
     @property
     def parts(self):
-        for ordinal, episode_id, _ in Q.episodes(self.title):
+        for ordinal, episode_id, _ in sorted(Q.episodes(self.title)):
             yield ordinal, Episode(ItemPage(self.repo, episode_id))
 
     @property
