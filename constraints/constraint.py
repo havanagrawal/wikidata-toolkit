@@ -187,3 +187,19 @@ def season_has_parts():
         fixer=inner_fix,
         name=f"season_has_parts()",
     )
+
+def has_title():
+    """Alias for has_property(wp.TITLE), but with an autofix"""
+    def inner_check(item):
+        return wp.TITLE.pid in item.claims
+
+    def inner_fix(item):
+        # todo(havan) Look up the label
+        # todo(havan) Look up the IMDB title
+        return False
+
+    return Constraint(
+        inner_check,
+        fixer=inner_fix,
+        name="has_title()",
+    )
