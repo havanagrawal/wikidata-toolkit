@@ -8,6 +8,53 @@ import properties.wikidata_properties as wp
 def format(item: ItemPage):
     return f"{item.title()} ({item.labels['en']})"
 
+def printable_target_value(value):
+    try:
+        return value.labels['en']
+    except (AttributeError, KeyError):
+        try:
+            return value.title()
+        except AttributeError:
+            try:
+                return value.toTimestr()
+            except:
+                return str(value)
+
+def copy_delayed(src_item: ItemPage, dest_item: ItemPage, props: Iterable[wp.WikidataProperty]):
+    repo = Site().data_repository()
+
+    src_item.get()
+    dest_item.get()
+
+    claims = []
+
+    for prop in props:
+        src_claims = src_item.claims.get(prop.pid, [])
+
+        if prop.pid in dest_item.claims:
+            print(f"{prop} already has a value in {format(dest_item)}")
+            continue
+
+        targets = [claim.getTarget() for claim in src_claims]
+
+        for target in targets:
+            target.get()
+
+            target_str = printable_target_value(target)
+
+            print(f"Copying {prop}={target_str} from {format(src_item)} to {format(dest_item)}")
+
+            new_claim = Claim(repo, prop.pid)
+            new_claim.setTarget(target)
+            summary = f'Setting {prop.pid} ({prop.name})'
+            claims.append((new_claim, summary, dest_item))
+    return claims
+
+def imdb_title(imdb_id):
+    if imdb_id is None:
+        return None
+    return None
+
 class RepoUtils():
     def __init__(self, repo=None):
         if repo is None:
@@ -50,7 +97,7 @@ class RepoUtils():
             for target in targets:
                 target.get()
 
-                target_str = self.printable_target_value(target)
+                target_str = printable_target_value(target)
 
                 print(f"Copying {prop}={target_str} from {format(src_item)} to {format(dest_item)}")
 
@@ -59,15 +106,3 @@ class RepoUtils():
                 dest_item.addClaim(new_claim, summary=f'Setting {prop.pid} ({prop.name})')
                 successes += 1
         return (successes, failures)
-
-    def printable_target_value(self, value):
-        try:
-            return value.labels['en']
-        except (AttributeError, KeyError):
-            try:
-                return value.title()
-            except AttributeError:
-                try:
-                    return value.toTimestr()
-                except:
-                    return str(value)
