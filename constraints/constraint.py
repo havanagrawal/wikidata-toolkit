@@ -34,7 +34,7 @@ class Constraint():
     def fix(self, item):
         """Return a list of claims that, if implemented, will fix the constraint failure"""
         if self._fixer is None:
-            print(f"No autofix available for {self._name}:{item}", None)
+            print(f"No autofix available for {self._name}:{item}")
             return []
         return self._fixer(item)
 
