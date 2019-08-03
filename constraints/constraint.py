@@ -1,11 +1,11 @@
 """Constraint abstract definition and implementations"""
 
 from typing import Callable
-from pywikibot import Claim
+from pywikibot import Claim, WbMonolingualText
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
 import properties.wikidata_properties as wp
-from utils import RepoUtils, copy_delayed
+from utils import RepoUtils, copy_delayed, imdb_title
 from sparql.query_builder import generate_sparql_query
 
 class Constraint():
@@ -28,9 +28,11 @@ class Constraint():
         self._fixer = fixer
 
     def validate(self, item):
+        """Return True if the item satisfies the constraint, else False"""
         return self._validator(item)
 
     def fix(self, item):
+        """Return a list of claims that, if implemented, will fix the constraint failure"""
         if self._fixer is None:
             print(f"No autofix available for {self._name}:{item}", None)
             return []
@@ -193,9 +195,16 @@ def has_title():
         return wp.TITLE.pid in item.claims
 
     def inner_fix(item):
-        # todo(havan) Look up the label
-        # todo(havan) Look up the IMDB title
-        return []
+        title = item.itempage.labels.get('en', None)
+        if title is None:
+            imdb_id = item.claims.get(wp.IMDB_ID.pid, None)
+            title = imdb_title(imdb_id)
+        if title is None:
+            return []
+        new_claim = Claim(item.repo, wp.TITLE.pid)
+        new_claim.setTarget(WbMonolingualText(title, 'en'))
+        summary = f'Setting {wp.TITLE} to {title}'
+        return [(new_claim, summary, item.itempage)]
 
     return Constraint(
         inner_check,
