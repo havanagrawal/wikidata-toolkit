@@ -14,8 +14,8 @@ class ConstraintCheckerBot(WikidataBot):
     """
     use_from_page = False
 
-    def __init__(self, generator, factory=Factory()):
-        super().__init__(generator=generator)
+    def __init__(self, generator, factory=Factory(), **kwargs):
+        super().__init__(generator=generator, **kwargs)
         self.factory = factory
 
     def print_failures(self, typed_item: BaseType, failed_constraints: List[Constraint]):
@@ -56,9 +56,6 @@ class ConstraintCheckerBot(WikidataBot):
 
 
 class ConstraintFixerBot(ConstraintCheckerBot):
-    def __init__(self, generator, factory=Factory()):
-        super().__init__(generator=generator, factory=factory)
-
     #override
     def treat_page_and_item(self, unused_page, item):
         """Fix items that have constraint failures
@@ -76,3 +73,38 @@ class ConstraintFixerBot(ConstraintCheckerBot):
             fixed += success
         total = len(not_satisfied)
         botlogging.output(f"Fixed {fixed}/{total} constraint failures")
+
+class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
+    """Accumulates all fixes, and then fixes them only when fixall is called"""
+    def __init__(self, generator, factory=Factory(), **kwargs):
+        super().__init__(generator, factory, **kwargs)
+        self.fixes = []
+
+    #override
+    def treat_page_and_item(self, unused_page, item):
+        """Fix items that have constraint failures
+
+            unused_page is always None since use_from_page is False.
+            See https://doc.wikimedia.org/pywikibot/master/api_ref/pywikibot.html#pywikibot.WikidataBot
+        """
+        _, not_satisfied = super().treat_page_and_item(unused_page, item)
+        typed_item = self.factory.get_typed_item(item.title())
+
+        fixes = [fix for constraint in not_satisfied for fix in constraint.fix(typed_item)]
+        self.fixes.extend(fixes)
+
+    def fixall(self):
+        for _, summary, _ in self.fixes:
+            print(summary)
+
+        fixed = 0
+        for claim, summary, itempage in self.fixes:
+            success = self.user_add_claim(itempage, claim, summary=summary)
+            fixed += success
+        total = len(self.fixes)
+        botlogging.output(f"Fixed {fixed}/{total} constraint failures")
+
+    #override
+    def run(self):
+        super().run()
+        self.fixall()
