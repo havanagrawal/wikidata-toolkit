@@ -8,17 +8,6 @@ from constraints import Constraint
 from properties.wikidata_item import WikidataItemId
 from click_utils import WIKIDATA_ITEM_ID_TYPE
 
-def validate_constraints_for_item(typed_item: BaseType, factory: Factory, autofix=False):
-    satisfied = []
-    not_satisfied = []
-    for constraint in typed_item.constraints:
-        if constraint.validate(typed_item):
-            satisfied.append(constraint)
-        else:
-            not_satisfied.append(constraint)
-
-    return satisfied, not_satisfied
-
 def print_failures(typed_item: BaseType, failed_constraints: List[Constraint]):
     for constraint in failed_constraints:
         print(f"{constraint} failed for {typed_item}")
@@ -55,6 +44,18 @@ def validate_constraints(item_ids, print_failures_only=True, autofix=False):
 
     print(f"Found {total_failures}/{total} constraint failures")
     print(f"Fixed {total_fixed}/{total_failures} constraint failures")
+
+def validate_constraints_for_item(typed_item: BaseType, factory: Factory, autofix=False):
+    print(f"Checking constraints for {typed_item}")
+    satisfied = []
+    not_satisfied = []
+    for constraint in typed_item.constraints:
+        if constraint.validate(typed_item):
+            satisfied.append(constraint)
+        else:
+            not_satisfied.append(constraint)
+
+    return satisfied, not_satisfied
 
 @click.command()
 @click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)

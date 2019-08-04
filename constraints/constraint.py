@@ -1,11 +1,11 @@
 """Constraint abstract definition and implementations"""
 
 from typing import Callable
-from pywikibot import Claim
+from pywikibot import Claim, WbMonolingualText
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
 import properties.wikidata_properties as wp
-from utils import RepoUtils
+from utils import RepoUtils, copy_delayed, imdb_title
 from sparql.query_builder import generate_sparql_query
 
 class Constraint():
@@ -28,12 +28,14 @@ class Constraint():
         self._fixer = fixer
 
     def validate(self, item):
+        """Return True if the item satisfies the constraint, else False"""
         return self._validator(item)
 
     def fix(self, item):
+        """Return a list of claims that, if implemented, will fix the constraint failure"""
         if self._fixer is None:
             print(f"No autofix available for {self._name}:{item}")
-            return False
+            return []
         return self._fixer(item)
 
     def __str__(self):
@@ -77,10 +79,9 @@ def inherits_property(prop: wp.WikidataProperty):
         parent_claims = item.parent.claims
 
         if prop.pid not in parent_claims:
-            return False
+            return []
 
-        _, failures = RepoUtils().copy(item.parent.itempage, item.itempage, [prop])
-        return failures == 0
+        return copy_delayed(item.parent.itempage, item.itempage, [prop])
 
     return Constraint(
         inner_check,
@@ -94,7 +95,7 @@ def item_has_parent(func):
         has_parent = item.parent is not None
         if not has_parent:
             print(f"{item} has no concept of parent")
-            return False
+            return []
 
         return func(*args, **kwargs)
 
@@ -110,12 +111,12 @@ def follows_something():
 
         if follows is None:
             print(f"autofix for follows_something({item.title}) failed")
-            return False
+            return []
 
         new_claim = Claim(item.repo, wp.FOLLOWS.pid)
         new_claim.setTarget(follows.itempage)
-        item.itempage.addClaim(new_claim, summary=f'Setting {wp.FOLLOWS.pid} ({wp.FOLLOWS.name})')
-        return True
+        summary = f'Setting {wp.FOLLOWS.pid} ({wp.FOLLOWS.name})'
+        return [(new_claim, summary, item.itempage)]
 
     return Constraint(
         inner_check,
@@ -133,12 +134,12 @@ def is_followed_by_something():
 
         if is_followed_by is None:
             print(f"autofix for is_followed_by({item.title}) failed")
-            return False
+            return []
 
         new_claim = Claim(item.repo, wp.FOLLOWED_BY.pid)
         new_claim.setTarget(is_followed_by.itempage)
-        item.itempage.addClaim(new_claim, bot=True, summary=f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})')
-        return True
+        summary = f'Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})'
+        return [(new_claim, summary, item.itempage)]
 
     return Constraint(
         inner_check,
@@ -155,7 +156,7 @@ def season_has_no_of_episodes_as_count_of_parts():
         )
 
     def inner_fix(item):
-        return False
+        return []
 
     return Constraint(
         inner_check,
@@ -168,7 +169,7 @@ def season_has_parts():
         return wp.HAS_PART.pid in item.claims
 
     def inner_fix(item):
-        added = False
+        claim_fixes = []
 
         for ordinal, episode in item.parts:
             qualifier = Claim(item.repo, wp.SERIES_ORDINAL.pid)
@@ -177,13 +178,36 @@ def season_has_parts():
             new_claim = Claim(item.repo, wp.HAS_PART.pid)
             new_claim.setTarget(episode.itempage)
             new_claim.addQualifier(qualifier)
-            item.itempage.addClaim(new_claim, summary=f'Adding {episode.title} to {wp.HAS_PART.pid}')
+            summary = f'Adding {episode.title} to {wp.HAS_PART.pid}'
+            claim_fixes.append((new_claim, summary, item.itempage))
 
-            added = True
-        return added
+        return claim_fixes
 
     return Constraint(
         inner_check,
         fixer=inner_fix,
         name=f"season_has_parts()",
+    )
+
+def has_title():
+    """Alias for has_property(wp.TITLE), but with an autofix"""
+    def inner_check(item):
+        return wp.TITLE.pid in item.claims
+
+    def inner_fix(item):
+        title = item.itempage.labels.get('en', None)
+        if title is None:
+            imdb_id = item.claims.get(wp.IMDB_ID.pid, None)
+            title = imdb_title(imdb_id)
+        if title is None:
+            return []
+        new_claim = Claim(item.repo, wp.TITLE.pid)
+        new_claim.setTarget(WbMonolingualText(title, 'en'))
+        summary = f'Setting {wp.TITLE} to {title}'
+        return [(new_claim, summary, item.itempage)]
+
+    return Constraint(
+        inner_check,
+        fixer=inner_fix,
+        name="has_title()",
     )

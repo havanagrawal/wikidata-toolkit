@@ -250,7 +250,6 @@ class Episode(BaseType):
     def _property_constraints(self):
         return [has_property(prop) for prop in (
             wp.INSTANCE_OF,
-            wp.TITLE,
             wp.PART_OF_THE_SERIES,
             wp.SEASON,
             wp.ORIGINAL_NETWORK,
@@ -264,6 +263,7 @@ class Episode(BaseType):
         )] + [
             follows_something(),
             is_followed_by_something(),
+            has_title(),
         ]
 
     def _inheritance_constraints(self):
