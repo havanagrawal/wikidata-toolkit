@@ -42,7 +42,7 @@ def copy_delayed(src_item: ItemPage, dest_item: ItemPage, props: Iterable[wp.Wik
 
             target_str = printable_target_value(target)
 
-            print(f"Copying {prop}={target_str} from {format(src_item)} to {format(dest_item)}")
+            print(f"Creating claim to copy {prop}={target_str} from {format(src_item)} to {format(dest_item)}")
 
             new_claim = Claim(repo, prop.pid)
             new_claim.setTarget(target)
