@@ -27,7 +27,9 @@ In general, Wikidata is an incredibly useful open-source data source, and any co
 
 [`constraint.py`](./constraints/constraint.py) contains the abstract definition and a few concrete implementations for the concept of a _Constraint_. This is similar to how Wikidata defines constraints, except that the implementation may contain a way to fix them.
 
-The various scripts (currently at root level) use a SPARQL query to find an item to start from, and then iterate its children, checking for consistencies, and fixing them if the appropriate flag is provided.
+The various scripts (currently at root level) use a SPARQL query to search for items, checking for consistencies, and fixing them.
+
+[`bots`](./bots) contains various Bot implementations that can be used to iterate through Wikidata pages using a generator, and _treat_ them.
 
 [`television.py`](./model/television.py) contains abstract models for the concepts of Episode, Season, Series and more. Each model has some semantic knowledge of the item it encapsulates, as well as the constraints it should be checked for.
 
@@ -65,27 +67,30 @@ Also see the [Wikidata page on Bots](https://www.wikidata.org/wiki/Wikidata:Bots
 
 ### Sample Commands
 
-Checking individual items for constraint failures:
-
+1. Checking individual items for constraint failures:
 ```bash
 # Q65604139 = Season 1 of "Dark"
 # Q65640227 Q65640226 Q65640224 = Episodes of "Dark"
 python3 check_constraints.py Q65640227 Q65640226 Q65640224 Q65604139
 ```
-
-Checking the episodes of a series (Jessica Jones) for constraint failures:
-
+2. Checking the episodes of a series (Jessica Jones) for constraint failures:
 ```bash
 # Q18605540 = Jessica Jones
 python3 episode_consistency_checker.py Q18605540 \
     --child_type=episode
 ```
-
-Checking and fixing the seasons of a series for constraint failures
-
+3. Checking and fixing the seasons of a series for constraint failures
 ```bash
 # Q18605540 = Jessica Jones
 python3 episode_consistency_checker.py Q18605540 \
     --child_type=season \
     --autofix
+```
+4. Checking and fixing the episodes of a series for constraint failures, but wait until all the failures have been reported before fixing all of them at the end.
+```bash
+# Q18605540 = Jessica Jones
+python3 episode_consistency_checker.py Q18605540 \
+    --child_type=episode \
+    --autofix \
+    --accumulate
 ```
