@@ -13,7 +13,7 @@
 
 This repo contains a few utility scripts that fix consistency issues and missing data on Wikidata, focusing on TV series.
 
-It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot). Check out its [contributions](https://www.wikidata.org/wiki/Special:Contributions/TheFireBenderBot) to get an idea of what it specializes at. [Here](https://xtools.wmflabs.org/ec/www.wikidata.org/TheFireBenderBot) are some stats.
+It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot). Check out its [contributions](https://www.wikidata.org/wiki/Special:Contributions/TheFireBenderBot) to get an idea of what it specializes at. Here are some [stats](https://xtools.wmflabs.org/ec/www.wikidata.org/TheFireBenderBot).
 
 ## Why Television Series?
 
