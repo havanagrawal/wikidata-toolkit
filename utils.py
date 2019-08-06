@@ -1,5 +1,7 @@
 from typing import Iterable
 
+import requests
+from bs4 import BeautifulSoup
 import click
 from pywikibot import Claim, Site, ItemPage
 
@@ -31,6 +33,10 @@ def copy_delayed(src_item: ItemPage, dest_item: ItemPage, props: Iterable[wp.Wik
     for prop in props:
         src_claims = src_item.claims.get(prop.pid, [])
 
+        if len(src_claims) > 1:
+            print(f"Cannot copy {prop} from {format(src_item)} to {format(dest_item)}. Only scalar properties can be copied")
+            continue
+
         if prop.pid in dest_item.claims:
             print(f"{prop} already has a value in {format(dest_item)}")
             continue
@@ -53,6 +59,11 @@ def copy_delayed(src_item: ItemPage, dest_item: ItemPage, props: Iterable[wp.Wik
 def imdb_title(imdb_id):
     if imdb_id is None:
         return None
+    response = requests.get(f"https://www.imdb.com/title/{imdb_id}")
+    soup = BeautifulSoup(response.content)
+    heading = soup.select_one("div.title_wrapper > h1")
+    if heading is not None:
+        return heading.get_text().strip()
     return None
 
 class RepoUtils():
