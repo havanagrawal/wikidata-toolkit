@@ -1,7 +1,8 @@
+"""Check constraints for season/episodes of a TV show"""
 import click
-
 from pywikibot import Site
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
+
 from bots import getbot
 from sparql.query_builder import generate_sparql_query
 import properties.wikidata_properties as wp
@@ -32,7 +33,7 @@ def check_tv_show(tvshow_id, child_type="episode", autofix=False, accumulate=Fal
         }
         query = generate_sparql_query(key_val_pairs)
         gen = WikidataSPARQLPageGenerator(query)
-        bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=False)
+        bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=False, filter=filter)
         bot.run()
 
 
