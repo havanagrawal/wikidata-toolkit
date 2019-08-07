@@ -20,7 +20,7 @@ class BaseType():
 
     @property
     def label(self):
-        return self._itempage.labels['en']
+        return self._itempage.labels.get('en', None)
 
     @property
     def title(self):
