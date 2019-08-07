@@ -94,7 +94,7 @@ python3 check_tv_show.py Q18605540 \
     --autofix \
     --accumulate
 ```
-5. Fixing only the titles of episodes of a series for constraint failures
+5. Fixing only the titles of episodes of a series
 ```bash
 # Q18605540 = Jessica Jones
 python3 check_tv_show.py Q18605540 \
