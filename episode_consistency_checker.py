@@ -10,9 +10,14 @@ from click_utils import WIKIDATA_ITEM_ID_TYPE
 @click.command()
 @click.argument("tvshow_id", type=WIKIDATA_ITEM_ID_TYPE)
 @click.option("--child_type", type=click.Choice(["episode", "season", "all"]))
-@click.option("--autofix", is_flag=True, default=False)
-@click.option("--accumulate", is_flag=True, default=False)
-def bulk_check(tvshow_id, child_type="episode", autofix=False, accumulate=False):
+@click.option("--autofix", is_flag=True, default=False, help="Fix constraint violations")
+@click.option("--accumulate", is_flag=True, default=False, help="Accumulate all fixes before applying them")
+@click.option("--filter", default="", help="Comma separated property names/tags to filter")
+def check_tv_show(tvshow_id, child_type="episode", autofix=False, accumulate=False, filter=""):
+    """Check constraints for season/episodes of this TV show
+
+    TVSHOW_ID is the ID of the television series, in the format Q######. 
+    """
     if child_type == "episode":
         instance_types = [wp.TELEVISION_SERIES_EPISODE]
     elif child_type == "season":
@@ -32,4 +37,4 @@ def bulk_check(tvshow_id, child_type="episode", autofix=False, accumulate=False)
 
 
 if __name__ == "__main__":
-    bulk_check()
+    check_tv_show()
