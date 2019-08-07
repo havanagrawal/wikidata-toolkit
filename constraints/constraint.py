@@ -197,8 +197,11 @@ def has_title():
     def inner_fix(item):
         title = item.itempage.labels.get('en', None)
         if title is None:
-            imdb_id = item.claims.get(wp.IMDB_ID.pid, None)
+            if wp.IMDB_ID.pid not in item.claims:
+                return []
+            imdb_id = item.claims[wp.IMDB_ID.pid][0].getTarget()
             title = imdb_title(imdb_id)
+            print(f"Fetched title='{title}' from IMDB using {imdb_id}")
         if title is None:
             return []
         new_claim = Claim(item.repo, wp.TITLE.pid)
