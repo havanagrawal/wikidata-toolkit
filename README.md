@@ -76,20 +76,20 @@ python3 check_constraints.py Q65640227 Q65640226 Q65640224 Q65604139
 2. Checking the episodes of a series (Jessica Jones) for constraint failures:
 ```bash
 # Q18605540 = Jessica Jones
-python3 episode_consistency_checker.py Q18605540 \
+python3 check_tv_show.py Q18605540 \
     --child_type=episode
 ```
 3. Checking and fixing the seasons of a series for constraint failures
 ```bash
 # Q18605540 = Jessica Jones
-python3 episode_consistency_checker.py Q18605540 \
+python3 check_tv_show.py Q18605540 \
     --child_type=season \
     --autofix
 ```
 4. Checking and fixing the episodes of a series for constraint failures, but wait until all the failures have been reported before fixing all of them at the end.
 ```bash
 # Q18605540 = Jessica Jones
-python3 episode_consistency_checker.py Q18605540 \
+python3 check_tv_show.py Q18605540 \
     --child_type=episode \
     --autofix \
     --accumulate
