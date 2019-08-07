@@ -8,7 +8,7 @@ from pywikibot import Claim, Site, ItemPage
 import properties.wikidata_properties as wp
 
 def format(item: ItemPage):
-    return f"{item.title()} ({item.labels['en']})"
+    return f"{item.title()} ({item.labels.get('en', None)})"
 
 def printable_target_value(value):
     try:
@@ -60,7 +60,7 @@ def imdb_title(imdb_id):
     if imdb_id is None:
         return None
     response = requests.get(f"https://www.imdb.com/title/{imdb_id}")
-    soup = BeautifulSoup(response.content)
+    soup = BeautifulSoup(response.content, features='lxml')
     heading = soup.select_one("div.title_wrapper > h1")
     if heading is not None:
         return heading.get_text().strip()
