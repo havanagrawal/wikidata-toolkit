@@ -268,10 +268,8 @@ class Episode(BaseType):
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (
-            wp.ORIGINAL_NETWORK,
             wp.COUNTRY_OF_ORIGIN,
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PRODUCTION_COMPANY,
             wp.PART_OF_THE_SERIES,
         )]
 
@@ -415,10 +413,8 @@ class Season(BaseType):
 
     def _inheritance_constraints(self):
         return [inherits_property(prop) for prop in (
-            wp.ORIGINAL_NETWORK,
             wp.COUNTRY_OF_ORIGIN,
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PRODUCTION_COMPANY,
         )]
 
 class Series(BaseType):
