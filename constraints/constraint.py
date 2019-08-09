@@ -190,12 +190,14 @@ def has_title():
 
     def fix(item):
         title = item.itempage.labels.get('en', None)
+        # Lookup IMDB
         if title is None:
             if wp.IMDB_ID.pid not in item.claims:
                 return []
             imdb_id = item.claims[wp.IMDB_ID.pid][0].getTarget()
             title = imdb_title(imdb_id)
             print(f"Fetched title='{title}' from IMDB using {imdb_id}")
+        # Lookup tv.com
         if title is None:
             if wp.TV_COM_ID.pid not in item.claims:
                 return []

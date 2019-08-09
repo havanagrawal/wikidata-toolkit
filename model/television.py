@@ -9,6 +9,11 @@ from sparql.query_builder import generate_sparql_query
 import sparql.queries as Q
 
 class BaseType():
+    """The base class for wrapper classes
+
+        This is mostly instance-type agnostic. It should be extended
+        by more specific implementations that encapsulate a concept.
+    """
     def __init__(self, itempage, repo=None):
         self._itempage = itempage
         self._itempage.get()
@@ -16,41 +21,64 @@ class BaseType():
 
     @property
     def itempage(self):
+        """The underlying ItemPage for this entity"""
         return self._itempage
 
     @property
     def label(self):
+        """The English (en) label of this entity"""
         return self._itempage.labels.get('en', None)
 
     @property
     def title(self):
+        """The QID of this entity, of the form Q####"""
         return self._itempage.title()
 
     @property
     def parent(self):
+        """The parent item, if the entity supports this concept"""
         return None
 
     @property
     def repo(self):
+        """The underlying repo from where data for this item is fetched"""
         return self._repo
-
-    @classmethod
-    def from_id(cls, item_id, repo=None):
-        repo = Site().data_repository() if repo is None else repo
-        return cls(ItemPage(repo, item_id), repo)
 
     @property
     def claims(self):
+        """The claims of this item page
+
+            This lifts the claims property so we don't have to
+            violate Demeter's Law all the time
+        """
         return self._itempage.claims
 
+    @property
+    def constraints(self):
+        """An iterable of Constraints that apply to this entity"""
+        return []
+
     def refresh(self):
+        """Fetch the latest data from Wikidata for this item"""
         self._itempage.get()
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.title} ({self.label}))"
 
     def __repr__(self):
-        return self.__str__()
+        return str(self)
+
+    @classmethod
+    def from_id(cls, item_id, repo=None):
+        """Create an instance of the class from the item ID (QID)
+
+            Note: This does not check if the QID is the same type
+            as the wrapper class. It is recommended that the user:
+              1. uses Factory to instantiate this class, OR
+              2. ensures that the item_id is in fact the same type as the class
+        """
+        repo = Site().data_repository() if repo is None else repo
+        return cls(ItemPage(repo, item_id), repo)
 
 class Episode(BaseType):
     """Encapsulates an item of instance 'television series episode'"""
@@ -60,7 +88,7 @@ class Episode(BaseType):
 
     @property
     def parent(self):
-        """Return the Season/Series of this Episode"""
+        """The Season/Series of this Episode"""
         if self.season_itempage is None:
             if self.series_itempage is None:
                 return None
@@ -69,7 +97,7 @@ class Episode(BaseType):
 
     @property
     def next(self):
-        """Return the next episode, if any"""
+        """The next episode, if any"""
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
             next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
@@ -95,7 +123,7 @@ class Episode(BaseType):
 
     @property
     def previous(self):
-        """Return the previous episode, if any"""
+        """The previous episode, if any"""
         # Check if it has the FOLLOWS field set
         if wp.FOLLOWS.pid in self.claims:
             previous_episode_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
@@ -121,6 +149,7 @@ class Episode(BaseType):
 
     @property
     def previous_in_season(self):
+        """The previous Episode from the same season"""
         if self.ordinal_in_season is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -139,7 +168,7 @@ class Episode(BaseType):
 
     @property
     def next_in_season(self):
-        """Return the next Episode from the same season"""
+        """The next Episode from the same season"""
         if self.ordinal_in_season is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -158,7 +187,7 @@ class Episode(BaseType):
 
     @property
     def previous_in_series(self):
-        """Return the next Episode from the same series"""
+        """The previous Episode from the same series"""
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -176,7 +205,7 @@ class Episode(BaseType):
 
     @property
     def next_in_series(self):
-        """Return the next Episode from the same series"""
+        """The next Episode from the same series"""
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -194,6 +223,7 @@ class Episode(BaseType):
 
     @property
     def series_itempage(self):
+        """The itempage of the series of which this episode is a part"""
         if wp.PART_OF_THE_SERIES.pid not in self.claims:
             return None
         series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
@@ -229,6 +259,7 @@ class Episode(BaseType):
 
     @property
     def ordinal_in_series(self):
+        """The series ordinal for this episode"""
         if not wp.PART_OF_THE_SERIES.pid in self.claims:
             return None
         series_claim = self.claims[wp.PART_OF_THE_SERIES.pid][0]
@@ -239,6 +270,7 @@ class Episode(BaseType):
 
     @property
     def ordinal_in_season(self):
+        """The season ordinal for this episode"""
         if not wp.SEASON.pid in self.claims:
             return None
         series_claim = self.claims[wp.SEASON.pid][0]
@@ -285,6 +317,7 @@ class Season(BaseType):
 
     @property
     def parent(self):
+        """The Series of which this season is a part"""
         series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
         return Series(series_itempage)
 
@@ -297,6 +330,7 @@ class Season(BaseType):
 
     @property
     def ordinal_in_series(self):
+        """The series ordinal for this season"""
         if not wp.PART_OF_THE_SERIES.pid in self.claims:
             return None
         series_claim = self.claims[wp.PART_OF_THE_SERIES.pid][0]
@@ -307,7 +341,7 @@ class Season(BaseType):
 
     @property
     def next_in_series(self):
-        """Return the next season from the same series"""
+        """The next season from the same series"""
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -325,7 +359,7 @@ class Season(BaseType):
 
     @property
     def previous_in_series(self):
-        """Return the previous season from the same series"""
+        """The previous season from the same series"""
         if self.ordinal_in_series is None:
             return None
         query = f"""SELECT ?item WHERE {{
@@ -343,7 +377,7 @@ class Season(BaseType):
 
     @property
     def next(self):
-        """Return the next season, if any"""
+        """The next season, if any"""
         # Check if it has the FOLLOWED_BY field set
         if wp.FOLLOWED_BY.pid in self.claims:
             next_season_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
@@ -365,7 +399,7 @@ class Season(BaseType):
 
     @property
     def previous(self):
-        """Return the previous season, if any"""
+        """The previous season, if any"""
         # Check if it has the FOLLOWS field set
         if wp.FOLLOWS.pid in self.claims:
             previous_season_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
@@ -387,6 +421,7 @@ class Season(BaseType):
 
     @property
     def parts(self):
+        """An iterable of (ordinal, Episode) that are parts of this season"""
         for ordinal, episode_id, _ in sorted(Q.episodes(self.title)):
             yield ordinal, Episode(ItemPage(self.repo, episode_id))
 

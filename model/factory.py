@@ -6,6 +6,7 @@ from properties.wikidata_properties import INSTANCE_OF, TELEVISION_SERIES_EPISOD
 from .television import Episode, Season, Series
 
 class Factory():
+    """Factory for creating instances of the wrapper classes exposed by model"""
     def __init__(self, repo=None):
         if repo is None:
             repo = Site().data_repository()
@@ -21,9 +22,9 @@ class Factory():
         instance_id = item_type.getTarget().id
         if instance_id == TELEVISION_SERIES_EPISODE:
             return Episode(item_page, self.repo)
-        elif instance_id == TELEVISION_SERIES_SEASON:
+        if instance_id == TELEVISION_SERIES_SEASON:
             return Season(item_page, self.repo)
-        elif instance_id == TELEVISION_SERIES:
+        if instance_id == TELEVISION_SERIES:
             return Series(item_page, self.repo)
 
         raise ValueError(f"Unsupported item of type {item_type}")
