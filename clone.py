@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from pywikibot import Site, ItemPage, Claim
+from pywikibot import Site, ItemPage
 import properties.wikidata_properties as wp
 from utils import RepoUtils
 
@@ -12,8 +12,8 @@ def clone(src, dest, props: Iterable[wp.WikidataProperty]):
     if not dest.startswith('Q'):
         raise ValueError(f"Expected item ID of the format 'Q####', found {dest}")
 
-    src_item = ItemPage(self.repo, src)
-    dest_item = ItemPage(self.repo, dest)
+    src_item = ItemPage(repoutil.repo, src)
+    dest_item = ItemPage(repoutil.repo, dest)
 
     repoutil.copy(src_item, dest_item, props)
 

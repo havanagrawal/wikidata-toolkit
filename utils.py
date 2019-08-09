@@ -2,7 +2,6 @@ from typing import Iterable
 
 import requests
 from bs4 import BeautifulSoup
-import click
 from pywikibot import Claim, Site, ItemPage
 
 import properties.wikidata_properties as wp
