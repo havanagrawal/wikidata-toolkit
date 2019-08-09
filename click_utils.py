@@ -1,13 +1,9 @@
+import re
 import click
-from properties.wikidata_item import WikidataItemId
 
-class WikidataItemIdType(click.ParamType):
-    """Validation class for Wikidata Item IDs such as Q65604139"""
-    def convert(self, value, param, ctx):
-        item_id = None
-        try:
-            return str(WikidataItemId(value))
-        except ValueError as e:
-            self.fail(str(e), param, ctx)
+WIKIDATA_ITEM_ID_PATTERN = re.compile(r"[Qq]\d+$")
 
-WIKIDATA_ITEM_ID_TYPE = WikidataItemIdType()
+def validate_item_id(ctx, param, item_id):
+    if WIKIDATA_ITEM_ID_PATTERN.match(item_id) is None:
+        raise click.BadParameter(f'item_id must be in the format Q###, found {item_id}')
+    return item_id.upper()

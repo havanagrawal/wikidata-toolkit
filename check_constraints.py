@@ -5,8 +5,7 @@ from pywikibot import Site
 
 from model import Factory, BaseType
 from constraints import Constraint
-from properties.wikidata_item import WikidataItemId
-from click_utils import WIKIDATA_ITEM_ID_TYPE
+from click_utils import validate_item_id
 
 def print_failures(typed_item: BaseType, failed_constraints: List[Constraint]):
     for constraint in failed_constraints:
@@ -58,10 +57,11 @@ def validate_constraints_for_item(typed_item: BaseType, factory: Factory, autofi
     return satisfied, not_satisfied
 
 @click.command()
-@click.argument('item_ids', type=WIKIDATA_ITEM_ID_TYPE, nargs=-1)
+@click.argument('item_ids', nargs=-1)
 @click.option('--print-failures-only/--print-all', default=True)
 @click.option('--autofix', is_flag=True, default=False)
 def validate_constraints_click(item_ids, print_failures_only=True, autofix=False):
+    item_ids = [validate_item_id(None, None, item_id) for item_id in item_ids]
     validate_constraints(item_ids, print_failures_only, autofix)
 
 if __name__ == "__main__":

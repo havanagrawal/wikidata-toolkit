@@ -6,10 +6,10 @@ from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 from bots import getbot
 from sparql.query_builder import generate_sparql_query
 import properties.wikidata_properties as wp
-from click_utils import WIKIDATA_ITEM_ID_TYPE
+from click_utils import validate_item_id
 
 @click.command()
-@click.argument("tvshow_id", type=WIKIDATA_ITEM_ID_TYPE)
+@click.argument("tvshow_id", callback=validate_item_id)
 @click.option("--child_type", type=click.Choice(["episode", "season", "all"]))
 @click.option("--autofix", is_flag=True, default=False, help="Fix constraint violations")
 @click.option("--accumulate", is_flag=True, default=False, help="Accumulate all fixes before applying them")
