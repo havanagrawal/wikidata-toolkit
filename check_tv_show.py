@@ -1,4 +1,5 @@
 """Check constraints for season/episodes of a TV show"""
+
 import click
 from pywikibot import Site
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator

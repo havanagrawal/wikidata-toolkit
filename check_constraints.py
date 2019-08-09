@@ -1,3 +1,5 @@
+"""Check constraints for season/episodes identified by individual item IDs"""
+
 import click
 from pywikibot import Site, ItemPage
 
