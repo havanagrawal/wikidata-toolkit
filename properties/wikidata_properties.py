@@ -46,12 +46,16 @@ DIRECTOR = WikidataProperty('P57', 'director')
 SEASON = WikidataProperty('P4908', 'season')
 NUMBER_OF_EPISODES = WikidataProperty('P1113', 'number of episodes')
 HAS_PART = WikidataProperty('P527', 'has part')
-IMDB_ID = WikidataProperty('P345', 'IMDb ID')
 DURATION = WikidataProperty('P2047', 'duration')
 FOLLOWS = WikidataProperty('P155', 'follows')
 FOLLOWED_BY = WikidataProperty('P156', 'followed by')
 SERIES_ORDINAL = WikidataProperty('P1545', 'series ordinal')
 
+# Identifiers
+IMDB_ID = WikidataProperty('P345', 'IMDb ID')
+TV_COM_ID = WikidataProperty('P2638', 'TV.com ID')
+
+# 'instance of' values
 TELEVISION_SERIES_EPISODE = 'Q21191270'
 TELEVISION_SERIES_SEASON = 'Q3464665'
 TELEVISION_SERIES = 'Q5398426'

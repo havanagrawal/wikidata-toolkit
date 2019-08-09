@@ -5,7 +5,7 @@ from pywikibot import Claim, WbMonolingualText
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
 import properties.wikidata_properties as wp
-from utils import RepoUtils, copy_delayed, imdb_title
+from utils import RepoUtils, copy_delayed, imdb_title, tv_com_title
 from sparql.query_builder import generate_sparql_query
 
 class Constraint():
@@ -203,7 +203,11 @@ def has_title():
             title = imdb_title(imdb_id)
             print(f"Fetched title='{title}' from IMDB using {imdb_id}")
         if title is None:
-            return []
+            if wp.TV_COM_ID.pid not in item.claims:
+                return []
+            tv_com_id = item.claims[wp.TV_COM_ID.pid][0].getTarget()
+            title = tv_com_title(tv_com_id)
+            print(f"Fetched title='{title}' from TV.com using {tv_com_id}")
         new_claim = Claim(item.repo, wp.TITLE.pid)
         new_claim.setTarget(WbMonolingualText(title, 'en'))
         summary = f'Setting {wp.TITLE} to {title}'

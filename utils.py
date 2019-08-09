@@ -66,6 +66,16 @@ def imdb_title(imdb_id):
         return heading.get_text().strip()
     return None
 
+def tv_com_title(tv_com_id):
+    if tv_com_id is None:
+        return None
+    response = requests.get(f"https://www.tv.com/{tv_com_id}")
+    soup = BeautifulSoup(response.content, features='lxml')
+    heading = soup.select_one(".ep_title")
+    if heading is not None:
+        return heading.get_text().strip()
+    return None
+
 class RepoUtils():
     def __init__(self, repo=None):
         if repo is None:
