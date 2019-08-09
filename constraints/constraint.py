@@ -1,6 +1,6 @@
 """Constraint abstract definition and implementations"""
 
-from typing import Callable
+from typing import Callable, Iterable
 from pywikibot import Claim, WbMonolingualText
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
@@ -22,7 +22,7 @@ class Constraint():
               any items referenced by it. This helps keep the script and the
               developer sane.
     """
-    def __init__(self, validator: Callable[..., bool], fixer: Callable[..., None]=None, name=None):
+    def __init__(self, validator: Callable[..., bool], fixer: Callable[..., Iterable]=None, name=None):
         self._validator = validator
         self._name = name
         self._fixer = fixer
@@ -46,10 +46,10 @@ class Constraint():
 
 def has_property(prop: wp.WikidataProperty):
     """Constraint for 'item has a certain property'"""
-    def inner(item):
+    def check(item):
         return prop.pid in item.claims
 
-    return Constraint(validator=inner, name=f"has_property({prop.name})")
+    return Constraint(validator=check, name=f"has_property({prop.name})")
 
 def inherits_property(prop: wp.WikidataProperty):
     """Constraint for 'item inherits property from parent item'
@@ -59,7 +59,7 @@ def inherits_property(prop: wp.WikidataProperty):
         expected to inherit properties such as country of origin (P495)
     """
     @item_has_parent
-    def inner_check(item):
+    def check(item):
         item_claims = item.claims
         parent_claims = item.parent.claims
 
@@ -75,17 +75,15 @@ def inherits_property(prop: wp.WikidataProperty):
         return item_titles == parent_titles
 
     @item_has_parent
-    def inner_fix(item):
-        parent_claims = item.parent.claims
-
-        if prop.pid not in parent_claims:
+    def fix(item):
+        if prop.pid not in item.parent.claims:
             return []
 
         return copy_delayed(item.parent.itempage, item.itempage, [prop])
 
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
+        fixer=fix,
         name=f"inherits_property({prop.name})"
     )
 
@@ -103,10 +101,10 @@ def item_has_parent(func):
 
 def follows_something():
     """Alias for has_property(wp.FOLLOWS), but with an autofix"""
-    def inner_check(item):
+    def check(item):
         return wp.FOLLOWS.pid in item.claims
 
-    def inner_fix(item):
+    def fix(item):
         follows = item.previous
 
         if follows is None:
@@ -119,17 +117,17 @@ def follows_something():
         return [(new_claim, summary, item.itempage)]
 
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
+        fixer=fix,
         name=f"follows_something()"
     )
 
 def is_followed_by_something():
     """Alias for has_property(wp.FOLLOWED_BY), but with an autofix"""
-    def inner_check(item):
+    def check(item):
         return wp.FOLLOWED_BY.pid in item.claims
 
-    def inner_fix(item):
+    def fix(item):
         is_followed_by = item.next
 
         if is_followed_by is None:
@@ -142,33 +140,29 @@ def is_followed_by_something():
         return [(new_claim, summary, item.itempage)]
 
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
+        fixer=fix,
         name=f"is_followed_by_something()"
     )
 
 def season_has_no_of_episodes_as_count_of_parts():
-    def inner_check(item):
+    def check(item):
         return (
             wp.HAS_PART.pid in item.claims and
             wp.NUMBER_OF_EPISODES.pid in item.claims and
             len(item.claims[wp.HAS_PART.pid]) == int(item.claims[wp.NUMBER_OF_EPISODES.pid][0].getTarget().amount)
         )
 
-    def inner_fix(item):
-        return []
-
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
         name=f"season_has_no_of_episodes_as_count_of_parts()",
     )
 
 def season_has_parts():
-    def inner_check(item):
+    def check(item):
         return wp.HAS_PART.pid in item.claims
 
-    def inner_fix(item):
+    def fix(item):
         claim_fixes = []
 
         for ordinal, episode in item.parts:
@@ -184,17 +178,17 @@ def season_has_parts():
         return claim_fixes
 
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
+        fixer=fix,
         name=f"season_has_parts()",
     )
 
 def has_title():
     """Alias for has_property(wp.TITLE), but with an autofix"""
-    def inner_check(item):
+    def check(item):
         return wp.TITLE.pid in item.claims
 
-    def inner_fix(item):
+    def fix(item):
         title = item.itempage.labels.get('en', None)
         if title is None:
             if wp.IMDB_ID.pid not in item.claims:
@@ -214,7 +208,7 @@ def has_title():
         return [(new_claim, summary, item.itempage)]
 
     return Constraint(
-        inner_check,
-        fixer=inner_fix,
+        check,
+        fixer=fix,
         name="has_title()",
     )
