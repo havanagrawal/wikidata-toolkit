@@ -1,10 +1,7 @@
-from typing import List
-
 import pywikibot.logging as botlogging
 from pywikibot.bot import WikidataBot
 
 from model import Factory, BaseType
-from constraints import Constraint
 
 
 class ConstraintCheckerBot(WikidataBot):
@@ -18,13 +15,13 @@ class ConstraintCheckerBot(WikidataBot):
         super().__init__(generator=generator, **kwargs)
         self.factory = factory
 
-    def print_failures(self, typed_item: BaseType, failed_constraints: List[Constraint]):
+    def print_failures(self, typed_item: BaseType, failed_constraints):
         for constraint in failed_constraints:
             botlogging.error(f"{constraint} failed for {typed_item}")
 
-    def print_successes(self, typed_item: BaseType, passed_constraints: List[Constraint]):
+    def print_successes(self, typed_item: BaseType, passed_constraints):
         for constraint in passed_constraints:
-            botlogging.output(f"{constraint} passed for {typed_item}")
+            botlogging.output(f"{constraint} passed for {typed_item}", toStdout=True)
 
     #override
     def treat_page_and_item(self, unused_page, item):
@@ -35,7 +32,7 @@ class ConstraintCheckerBot(WikidataBot):
         """
         item.get()
         typed_item = self.factory.get_typed_item(item.title())
-        botlogging.output(f"Checking constraints for {typed_item}")
+        botlogging.output(f"Checking constraints for {typed_item}", toStdout=True)
         satisfied = []
         not_satisfied = []
         for constraint in typed_item.constraints:
@@ -50,7 +47,7 @@ class ConstraintCheckerBot(WikidataBot):
         total = len(typed_item.constraints)
         failures = len(not_satisfied)
 
-        botlogging.output(f"Found {failures}/{total} constraint failures")
+        botlogging.output(f"Found {failures}/{total} constraint failures", toStdout=True)
 
         return satisfied, not_satisfied
 
@@ -118,7 +115,7 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
             success = self.user_add_claim(itempage, claim, summary=summary)
             fixed += int(success)
         total = len(self.fixes)
-        botlogging.output(f"Fixed {fixed}/{total} constraint failures")
+        botlogging.output(f"Fixed {fixed}/{total} constraint failures", toStdout=True)
 
     #override
     def run(self):
