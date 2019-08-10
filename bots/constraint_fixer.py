@@ -53,8 +53,10 @@ class ConstraintCheckerBot(WikidataBot):
 
 
 class ConstraintFixerBot(ConstraintCheckerBot):
-    def __init__(self, generator, factory=Factory(), filter="", **kwargs):
+    def __init__(self, generator, factory=Factory(), filter=None, **kwargs):
         super().__init__(generator=generator, factory=factory, **kwargs)
+        if filter is None:
+            filter = ""
         self._filters = set(filter.split(","))
 
     #override
@@ -80,10 +82,12 @@ class ConstraintFixerBot(ConstraintCheckerBot):
 
 class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
     """Accumulates all fixes, and then fixes them only when fixall is called"""
-    def __init__(self, generator, factory=Factory(), filter="", sort=True, **kwargs):
+    def __init__(self, generator, factory=Factory(), filter=None, sort=True, **kwargs):
         super().__init__(generator, factory, **kwargs)
         self.fixes = []
         self.sort = sort
+        if filter is None:
+            filter = ""
         self._filters = set(filter.split(","))
 
     #override
