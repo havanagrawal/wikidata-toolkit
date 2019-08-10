@@ -13,8 +13,9 @@ from click_utils import validate_item_id
 @click.option("--child_type", type=click.Choice(["episode", "season", "all"]))
 @click.option("--autofix", is_flag=True, default=False, help="Fix constraint violations")
 @click.option("--accumulate", is_flag=True, default=False, help="Accumulate all fixes before applying them")
+@click.option("--always", is_flag=True, default=False, help="Don't prompt for confirmation, apply all fixes")
 @click.option("--filter", default="", help="Comma separated property names/tags to filter")
-def check_tv_show(tvshow_id, child_type="episode", autofix=False, accumulate=False, filter=""):
+def check_tv_show(tvshow_id, child_type="episode", autofix=False, accumulate=False, always=False, filter=""):
     """Check constraints for season/episodes of this TV show
 
     TVSHOW_ID is the ID of the television series, in the format Q######. 
@@ -33,7 +34,7 @@ def check_tv_show(tvshow_id, child_type="episode", autofix=False, accumulate=Fal
         }
         query = generate_sparql_query(key_val_pairs)
         gen = WikidataSPARQLPageGenerator(query)
-        bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=False, filter=filter)
+        bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=always, filter=filter)
         bot.run()
 
 
