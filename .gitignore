@@ -1,2 +1,7 @@
 __pycache__
 apicache-py3
+pywiki
+throttle.ctrl
+user-config.py
+user-password.py
+pywikibot.lwp
