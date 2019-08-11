@@ -38,6 +38,8 @@ In general, Wikidata is an incredibly useful open-source data source, and any co
 
 ### Pre-Requisites
 
+#### Account Setup
+
 In order to run the scripts, you need to [create a Bot account](https://www.wikidata.org/wiki/Wikidata:Creating_a_bot) on Wikidata. Bot names usually end with the suffix "Bot". Once you have the appropriate credentials, create the following files:
 
 [`user-config.py`](https://www.mediawiki.org/wiki/Manual:Pywikibot/user-config.py)
@@ -63,6 +65,16 @@ OR
 ```
 
 Also see the [Wikidata page on Bots](https://www.wikidata.org/wiki/Wikidata:Bots)
+
+#### Requirements
+
+Next, you need to install dependencies using the `requirements.txt` file. This is best done using a virtualenv and pip3:
+
+```bash
+virtualenv pywiki
+source pywiki/bin/activate
+pip3 install -r requirements.txt
+```
 
 ### Sample Commands
 
