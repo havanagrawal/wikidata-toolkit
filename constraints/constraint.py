@@ -190,20 +190,22 @@ def has_title():
 
     def fix(item):
         title = item.itempage.labels.get('en', None)
+        # For debug only
+        _src, _src_key = None, None
         # Lookup IMDB
         if title is None:
-            if wp.IMDB_ID.pid not in item.claims:
-                return []
-            imdb_id = item.claims[wp.IMDB_ID.pid][0].getTarget()
+            imdb_id = item.first_claim(wp.IMDB_ID.pid)
             title = imdb_title(imdb_id)
-            print(f"Fetched title='{title}' from IMDB using {imdb_id}")
+            _src, _src_key = 'IMDB', imdb_id
         # Lookup tv.com
         if title is None:
-            if wp.TV_COM_ID.pid not in item.claims:
-                return []
-            tv_com_id = item.claims[wp.TV_COM_ID.pid][0].getTarget()
+            tv_com_id = item.first_claim(wp.TV_COM_ID.pid)
             title = tv_com_title(tv_com_id)
-            print(f"Fetched title='{title}' from TV.com using {tv_com_id}")
+            _src, _src_key = 'TV.com', tv_com_id
+        # Did not find a title from any source
+        if title is None:
+            return []
+        print(f"Fetched title='{title}' from {_src} using {_src_key}")
         new_claim = Claim(item.repo, wp.TITLE.pid)
         new_claim.setTarget(WbMonolingualText(title, 'en'))
         summary = f'Setting {wp.TITLE} to {title}'
