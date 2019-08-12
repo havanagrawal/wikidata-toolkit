@@ -53,6 +53,14 @@ class BaseType():
         """
         return self._itempage.claims
 
+    def first_claim(self, key, default=None):
+        """The first claim for this property, or default"""
+        if key not in self._itempage.claims:
+            return None
+        if not self._itempage.claims[key]:
+            return None
+        return self._itempage.claims[key][0].getTarget()
+
     @property
     def constraints(self):
         """An iterable of Constraints that apply to this entity"""
