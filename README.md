@@ -8,6 +8,7 @@
 1. [Usage](#usage)
     1. [Pre-Requisites](#pre-requisites)
     1. [Sample Commands](#sample-commands)
+    1. [Canned Scripts](#canned-scripts)
 1. [Constraints](#constraints)
 
 ## Introduction
@@ -122,6 +123,19 @@ python3 check_tv_show.py Q18605540 \
     --autofix \
     --accumulate \
     --filter P1476
+```
+
+### Canned Scripts
+
+A few fixes are fairly straightforward, and should not require supervision. The [`canned`](./canned) folder exposes these fixes in the form of scripts that can be run directly without any arguments. If you want to see what changes will be made, run the script with the `--dry` flag.
+
+Example:
+```
+# Dry run mode, won't update labels
+python3 -m canned.fix_missing_labels --dry
+
+# Run after confirming that the changes look correct
+python3 -m canned.fix_missing_labels
 ```
 
 ## Constraints
