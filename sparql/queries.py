@@ -56,3 +56,29 @@ def episodes_with_titles_and_missing_labels():
         title = result['title']
         series_label = result['seriesLabel']
         yield episode_id, title, series_label
+
+def movies_with_missing_titles():
+    """find English movies with missing titles, but with label
+    
+        Returns an iterable of (movie QID, movie label)
+    """
+    query = f"""
+    SELECT ?movie ?movieLabel WHERE {{
+      ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
+        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860.
+      OPTIONAL {{ ?movie wdt:{wp.TITLE.pid} ?title. }}
+      FILTER(!(BOUND(?title)))
+      FILTER(!(REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
+      SERVICE wikibase:label {{
+        bd:serviceParam wikibase:language "en".
+        ?movie rdfs:label ?movieLabel.
+      }}
+    }}
+    ORDER BY (?movieLabel)
+    """
+    print(query)
+    results = SparqlQuery(repo=Site().data_repository()).select(query)
+    for result in results:
+        movie_id = result['movie'].split("/")[-1]
+        movie_label = result['movieLabel']
+        yield movie_id, movie_label

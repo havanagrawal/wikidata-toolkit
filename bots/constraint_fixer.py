@@ -73,7 +73,8 @@ class ConstraintFixerBot(ConstraintCheckerBot):
         fixes = [fix for constraint in not_satisfied for fix in constraint.fix(typed_item)]
         fixed = 0
         for claim, summary, itempage in fixes:
-            if not should_fix(summary, self._filters):
+            skip_fix = not should_fix(summary, self._filters)
+            if self._filters and skip_fix:
                 continue
             success = self.user_add_claim(itempage, claim, summary=summary)
             fixed += success
