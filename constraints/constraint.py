@@ -8,6 +8,7 @@ import properties.wikidata_properties as wp
 from utils import RepoUtils, copy_delayed, imdb_title, tv_com_title
 from sparql.query_builder import generate_sparql_query
 
+
 class Constraint():
     """A constraint on data consistency/quality
 
@@ -22,7 +23,8 @@ class Constraint():
               any items referenced by it. This helps keep the script and the
               developer sane.
     """
-    def __init__(self, validator: Callable[..., bool], fixer: Callable[..., Iterable]=None, name=None):
+
+    def __init__(self, validator: Callable[..., bool], fixer: Callable[..., Iterable] = None, name=None):
         self._validator = validator
         self._name = name
         self._fixer = fixer
@@ -44,12 +46,14 @@ class Constraint():
     def __repr__(self):
         return self.__str__()
 
+
 def has_property(prop: wp.WikidataProperty):
     """Constraint for 'item has a certain property'"""
     def check(item):
         return prop.pid in item.claims
 
     return Constraint(validator=check, name=f"has_property({prop.name})")
+
 
 def inherits_property(prop: wp.WikidataProperty):
     """Constraint for 'item inherits property from parent item'
@@ -67,7 +71,8 @@ def inherits_property(prop: wp.WikidataProperty):
             return False
 
         item_targets = [claim.getTarget() for claim in item_claims[prop.pid]]
-        parent_targets = [claim.getTarget() for claim in parent_claims[prop.pid]]
+        parent_targets = [claim.getTarget()
+                          for claim in parent_claims[prop.pid]]
 
         item_titles = {t.title() for t in item_targets}
         parent_titles = {t.title() for t in parent_targets}
@@ -87,6 +92,7 @@ def inherits_property(prop: wp.WikidataProperty):
         name=f"inherits_property({prop.name})"
     )
 
+
 def item_has_parent(func):
     def wrapper(*args, **kwargs):
         item = args[0]
@@ -98,6 +104,7 @@ def item_has_parent(func):
         return func(*args, **kwargs)
 
     return wrapper
+
 
 def follows_something():
     """Alias for has_property(wp.FOLLOWS), but with an autofix"""
@@ -122,6 +129,7 @@ def follows_something():
         name=f"follows_something()"
     )
 
+
 def is_followed_by_something():
     """Alias for has_property(wp.FOLLOWED_BY), but with an autofix"""
     def check(item):
@@ -145,18 +153,21 @@ def is_followed_by_something():
         name=f"is_followed_by_something()"
     )
 
+
 def season_has_no_of_episodes_as_count_of_parts():
     def check(item):
         return (
             wp.HAS_PART.pid in item.claims and
             wp.NUMBER_OF_EPISODES.pid in item.claims and
-            len(item.claims[wp.HAS_PART.pid]) == int(item.claims[wp.NUMBER_OF_EPISODES.pid][0].getTarget().amount)
+            len(item.claims[wp.HAS_PART.pid]) == int(
+                item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount)
         )
 
     return Constraint(
         check,
         name=f"season_has_no_of_episodes_as_count_of_parts()",
     )
+
 
 def season_has_parts():
     def check(item):
@@ -183,13 +194,14 @@ def season_has_parts():
         name=f"season_has_parts()",
     )
 
+
 def has_title():
     """Alias for has_property(wp.TITLE), but with an autofix"""
     def check(item):
         return wp.TITLE.pid in item.claims
 
     def fix(item):
-        title = item.itempage.labels.get('en', None)
+        title = None
         # For debug only
         _src, _src_key = None, None
         # Lookup IMDB
@@ -202,6 +214,10 @@ def has_title():
             tv_com_id = item.first_claim(wp.TV_COM_ID.pid)
             title = tv_com_title(tv_com_id)
             _src, _src_key = 'TV.com', tv_com_id
+        # Lookup label
+        if title is None:
+            title = item.itempage.labels.get('en', None)
+            _src, _src_key = 'label', 'en'
         # Did not find a title from any source
         if title is None:
             return []
