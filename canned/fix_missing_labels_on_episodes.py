@@ -6,7 +6,12 @@ from sparql.queries import episodes_with_titles_and_missing_labels
 
 
 @click.command()
-@click.option("--dry", is_flag=True, default=False, help="Only print out the changes, don't run any commands")
+@click.option(
+    "--dry",
+    is_flag=True,
+    default=False,
+    help="Only print out the changes, don't run any commands",
+)
 def main(dry=False):
     dry_str = ""
     if dry:
@@ -18,7 +23,7 @@ def main(dry=False):
         if not dry:
             episode_item = ItemPage(repo, episode_id)
             episode_item.get()
-            episode_item.editLabels({'en': title})
+            episode_item.editLabels({"en": title})
 
 
 if __name__ == "__main__":
