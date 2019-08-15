@@ -37,12 +37,12 @@ def episodes_with_titles_and_missing_labels():
     query = f"""
     SELECT ?episode ?episodeLabel ?seriesLabel ?title WHERE {{
         ?episode wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE};
-            wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860.
+            wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:{wp.ENGLISH}.
         OPTIONAL {{ ?episode wdt:{wp.TITLE.pid} ?title. }}
         OPTIONAL {{ ?episode wdt:{wp.PART_OF_THE_SERIES.pid} ?series. }}
-        FILTER(BOUND(?title))
         # Skip "http://www.wikidata.org/entity/" (31 characters)
         FILTER(REGEX(?episodeLabel, SUBSTR(STR(?episode), 32)))
+        FILTER((LANG(?title)) = "en")
         SERVICE wikibase:label {{
             bd:serviceParam wikibase:language "en".
             ?episode rdfs:label ?episodeLabel.
@@ -70,9 +70,10 @@ def movies_with_missing_labels_with_title():
     """
     query = f"""SELECT ?movieLabel ?title ?imdbId WHERE {{
       ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
-        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860;
+        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:{wp.ENGLISH};
         wdt:{wp.TITLE.pid} ?title;
         wdt:{wp.IMDB_ID.pid}  ?imdbId.
+      # Skip "http://www.wikidata.org/entity/" (31 characters)
       FILTER((REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
       FILTER((LANG(?title)) = "en")
       SERVICE wikibase:label {{
@@ -98,11 +99,12 @@ def movies_with_missing_titles():
     query = f"""
     SELECT ?movie ?movieLabel WHERE {{
       ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
-        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860.
+        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:{wp.ENGLISH}.
       OPTIONAL {{ ?movie wdt:{wp.TITLE.pid} ?title. }}
       OPTIONAL {{ ?movie wdt:P345  ?imdbId. }}
       FILTER(!(BOUND(?title)))
       FILTER((BOUND(?imdbId)))
+      # Skip "http://www.wikidata.org/entity/" (31 characters)
       FILTER(!(REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
       SERVICE wikibase:label {{
         bd:serviceParam wikibase:language "en".
@@ -117,3 +119,33 @@ def movies_with_missing_titles():
         movie_id = result['movie'].split("/")[-1]
         movie_label = result['movieLabel']
         yield movie_id, movie_label
+
+
+def books_with_missing_labels_with_title():
+  """Find English books with missing labels, but with a title
+
+      Missing labels are identified by checking if the label is equal to 
+      the QID
+
+      Returns an iterable of (book QID, title)
+  """
+  query = f"""
+  SELECT ?book ?bookLabel ?title WHERE {{
+    ?book wdt:{wp.INSTANCE_OF.pid} wd:{wp.BOOK};
+      wdt:{wp.LANGUAGE_OF_WORK_OR_NAME.pid} wd:{wp.ENGLISH};
+      wdt:{wp.TITLE.pid} ?title;
+    FILTER(REGEX(?bookLabel, SUBSTR(STR(?book), 32 )))
+    FILTER((LANG(?title)) = "en")
+    SERVICE wikibase:label {{
+      bd:serviceParam wikibase:language "en".
+      ?book rdfs:label ?bookLabel.
+    }}
+  }}
+  ORDER BY (?title)
+  """
+  print(query)
+  results = SparqlQuery(repo=Site().data_repository()).select(query)
+  for result in results:
+      book_label = result['bookLabel']
+      title = result['title']
+      yield book_label, title

@@ -50,6 +50,7 @@ DURATION = WikidataProperty('P2047', 'duration')
 FOLLOWS = WikidataProperty('P155', 'follows')
 FOLLOWED_BY = WikidataProperty('P156', 'followed by')
 SERIES_ORDINAL = WikidataProperty('P1545', 'series ordinal')
+LANGUAGE_OF_WORK_OR_NAME = WikidataProperty('P407', 'language of work or name')
 
 # Identifiers
 IMDB_ID = WikidataProperty('P345', 'IMDb ID')
@@ -60,3 +61,7 @@ TELEVISION_SERIES_EPISODE = 'Q21191270'
 TELEVISION_SERIES_SEASON = 'Q3464665'
 TELEVISION_SERIES = 'Q5398426'
 MINISERIES = 'Q1259759'
+BOOK = 'Q571'
+
+# Languages
+ENGLISH = 'Q1860'
