@@ -142,10 +142,11 @@ python3 -m canned.fix_missing_labels
 
 | Constraint Name | Description | Supports Autofix | Example | Relevant Properties |
 |-----------------|-------------|------------------|---------|----|
-| [has_property](./constraints/constraint.py#L47)    | Check if an item has a certain property | No | An episode should have the property 'title' (P1476) | |
-| [inherits_property](./constraints/constraint.py#L54) | Check if an item inherits a certain property from its parent | Yes | An episode should have the same value for 'country of origin' (P495) as its season | |
-| [follows_something](./constraints/constraint.py#L102) | Check if an item follows another item | Yes | An episode (S1 E9) must follow the episode (S1 E8) | P155 (follows) |
-| [is_followed_by_something](./constraints/constraint.py#L125) | Check if an item is followed by another item | Yes | An episode (S1 E8) must be followed by the episode (S1 E9) | P156 (followed by) |
-| [season_has_no_of_episodes_as_count_of_parts](./constraints/constraint.py#L148) | Check if a season has its 'no of episodes' (P1113) set to the number of parts | No | | P527 (has part), P1113 (no of episodes) | 
-| [season_has_parts](./constraints/constraint.py#L161) | Check if a season has its episodes listed as its parts | Yes | A season with 10 episodes (S1 E1 to S1 E10) must have all 10 episodes in its 'has part' property | P527 (has part) |
-| [has_title](./constraints/constraint.py#L186) | Check if an episode/season has its 'title' (P1476) set | Yes | An episode whose title is "Beginnings" must have the property set to this value | P1476 (title) |
+| [has_property](./constraints/constraint.py#L57)    | Check if an item has a certain property | No | An episode should have the property 'title' (P1476) | |
+| [inherits_property](./constraints/constraint.py#L66) | Check if an item inherits a certain property from its parent | Yes | An episode should have the same value for 'country of origin' (P495) as its season | |
+| [follows_something](./constraints/constraint.py#L113) | Check if an item follows another item | Yes | An episode (S1 E9) must follow the episode (S1 E8) | P155 (follows) |
+| [is_followed_by_something](./constraints/constraint.py#L134) | Check if an item is followed by another item | Yes | An episode (S1 E8) must be followed by the episode (S1 E9) | P156 (followed by) |
+| [season_has_no_of_episodes_as_count_of_parts](./constraints/constraint.py#L155) | Check if a season has its 'no of episodes' (P1113) set to the number of parts | No | | P527 (has part), P1113 (no of episodes) | 
+| [season_has_parts](./constraints/constraint.py#L167) | Check if a season has its episodes listed as its parts | Yes | A season with 10 episodes (S1 E1 to S1 E10) must have all 10 episodes in its 'has part' property | P527 (has part) |
+| [has_title](./constraints/constraint.py#L189) | Check if an episode/season has its 'title' (P1476) set | Yes | An episode whose title is "Beginnings" must have the property set to this value | P1476 (title) |
+| [has_english_label](./constraints/constraint.py#L225) | Check if an episode/season has its 'label' set | Yes | An episode whose title is "Beginnings" must have the label set to this value | label |
