@@ -5,3 +5,4 @@ throttle.ctrl
 user-config.py
 user-password.py
 pywikibot.lwp
+.mypy_cache

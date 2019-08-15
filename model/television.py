@@ -1,12 +1,15 @@
 """Wrapper classes for high-level concepts relating to TV series"""
+from __future__ import annotations
+
+from typing import Optional
 
 from pywikibot import ItemPage, Site
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
-from constraints import *
 import properties.wikidata_properties as wp
-from sparql.query_builder import generate_sparql_query
 import sparql.queries as Q
+from constraints import *
+from sparql.query_builder import generate_sparql_query
 
 
 class BaseType():
@@ -16,7 +19,7 @@ class BaseType():
         by more specific implementations that encapsulate a concept.
     """
 
-    def __init__(self, itempage, repo=None):
+    def __init__(self, itempage: ItemPage, repo=None):
         self._itempage = itempage
         self._itempage.get()
         self._repo = Site().data_repository() if repo is None else repo
@@ -32,7 +35,7 @@ class BaseType():
         return self._itempage.labels.get('en', None)
 
     @property
-    def title(self):
+    def qid(self):
         """The QID of this entity, of the form Q####"""
         return self._itempage.title()
 
@@ -73,7 +76,7 @@ class BaseType():
         self._itempage.get()
 
     def __str__(self):
-        return f"{self.__class__.__name__}({self.title} ({self.label}))"
+        return f"{self.__class__.__name__}({self.qid} ({self.label}))"
 
     def __repr__(self):
         return str(self)
@@ -107,7 +110,7 @@ class Episode(BaseType):
         return Season(self.season_itempage)
 
     @property
-    def next(self):
+    def next(self) -> Optional[Episode]:
         """The next episode, if any"""
         # Check if it has the FOLLOWED_BY field set
         next_episode_itempage = self.first_claim(wp.FOLLOWED_BY.pid)
@@ -115,7 +118,7 @@ class Episode(BaseType):
             return Episode(next_episode_itempage)
 
         # Find the item that has the FOLLOWS field set to this item
-        query = generate_sparql_query({wp.FOLLOWS.pid: self.title})
+        query = generate_sparql_query({wp.FOLLOWS.pid: self.qid})
         gen = WikidataSPARQLPageGenerator(query)
         is_followed_by = next(gen, None)
 
@@ -133,7 +136,7 @@ class Episode(BaseType):
         return None
 
     @property
-    def previous(self):
+    def previous(self) -> Optional[Episode]:
         """The previous episode, if any"""
         # Check if it has the FOLLOWS field set
         previous_episode_itempage = self.first_claim(wp.FOLLOWS.pid)
@@ -141,7 +144,7 @@ class Episode(BaseType):
             return Episode(previous_episode_itempage)
 
         # Find the item that has the FOLLOWED_BY field set to this item
-        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.title})
+        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.qid})
         gen = WikidataSPARQLPageGenerator(query)
         follows = next(gen, None)
 
@@ -159,7 +162,7 @@ class Episode(BaseType):
         return None
 
     @property
-    def previous_in_season(self):
+    def previous_in_season(self) -> Optional[Episode]:
         """The previous Episode from the same season"""
         if self.ordinal_in_season is None:
             return None
@@ -178,7 +181,7 @@ class Episode(BaseType):
         return Episode(previous_episode_itempage)
 
     @property
-    def next_in_season(self):
+    def next_in_season(self) -> Optional[Episode]:
         """The next Episode from the same season"""
         if self.ordinal_in_season is None:
             return None
@@ -197,7 +200,7 @@ class Episode(BaseType):
         return Episode(next_episode_itempage)
 
     @property
-    def previous_in_series(self):
+    def previous_in_series(self) -> Optional[Episode]:
         """The previous Episode from the same series"""
         if self.ordinal_in_series is None:
             return None
@@ -215,7 +218,7 @@ class Episode(BaseType):
         return Episode(previous_episode_itempage)
 
     @property
-    def next_in_series(self):
+    def next_in_series(self) -> Optional[Episode]:
         """The next Episode from the same series"""
         if self.ordinal_in_series is None:
             return None
@@ -233,7 +236,7 @@ class Episode(BaseType):
         return Episode(next_episode_itempage)
 
     @property
-    def series_itempage(self):
+    def series_itempage(self) -> Optional[ItemPage]:
         """The itempage of the series of which this episode is a part"""
         series_itempage = self.first_claim(wp.PART_OF_THE_SERIES.pid)
         if series_itempage is None:
@@ -242,7 +245,7 @@ class Episode(BaseType):
         return series_itempage
 
     @property
-    def part_of_the_series(self):
+    def part_of_the_series(self) -> Optional[str]:
         """The ID of the series of which this episode is a part"""
         if self.series_itempage is None:
             return None
@@ -258,14 +261,14 @@ class Episode(BaseType):
         return season_itempage
 
     @property
-    def season(self):
+    def season(self) -> Optional[str]:
         """The ID of the season of which this episode is a part"""
         if self.season_itempage is None:
             return None
         return self.season_itempage.title()
 
     @property
-    def ordinal_in_series(self):
+    def ordinal_in_series(self) -> Optional[int]:
         """The series ordinal for this episode"""
         if not wp.PART_OF_THE_SERIES.pid in self.claims:
             return None
@@ -276,15 +279,19 @@ class Episode(BaseType):
         return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
 
     @property
-    def ordinal_in_season(self):
+    def ordinal_in_season(self) -> Optional[int]:
         """The season ordinal for this episode"""
-        if not wp.SEASON.pid in self.claims:
+        if wp.SEASON.pid not in self.claims:
             return None
         series_claim = self.claims[wp.SEASON.pid][0]
         if wp.SERIES_ORDINAL.pid not in series_claim.qualifiers:
             return None
 
         return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
+
+    @property
+    def title(self) -> str:
+        return self.first_claim(wp.TITLE.pid)
 
     def _property_constraints(self):
         return [has_property(prop) for prop in (
@@ -303,6 +310,7 @@ class Episode(BaseType):
             follows_something(),
             is_followed_by_something(),
             has_title(),
+            has_english_label(),
         ]
 
     def _inheritance_constraints(self):
@@ -334,7 +342,7 @@ class Season(BaseType):
         return Series(series_itempage)
 
     @property
-    def part_of_the_series(self):
+    def part_of_the_series(self) -> Optional[str]:
         """The ID of the series of which this episode is a part"""
         series = self.first_claim(wp.PART_OF_THE_SERIES.pid)
         if series is not None:
@@ -342,7 +350,7 @@ class Season(BaseType):
         return None
 
     @property
-    def ordinal_in_series(self):
+    def ordinal_in_series(self) -> Optional[int]:
         """The series ordinal for this season"""
         if wp.PART_OF_THE_SERIES.pid not in self.claims:
             return None
@@ -353,7 +361,7 @@ class Season(BaseType):
         return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
 
     @property
-    def next_in_series(self):
+    def next_in_series(self) -> Optional[Season]:
         """The next season from the same series"""
         if self.ordinal_in_series is None:
             return None
@@ -371,7 +379,7 @@ class Season(BaseType):
         return Season(next_season_itempage)
 
     @property
-    def previous_in_series(self):
+    def previous_in_series(self) -> Optional[Season]:
         """The previous season from the same series"""
         if self.ordinal_in_series is None:
             return None
@@ -389,7 +397,7 @@ class Season(BaseType):
         return Season(previous_season_itempage)
 
     @property
-    def next(self):
+    def next(self) -> Optional[Season]:
         """The next season, if any"""
         # Check if it has the FOLLOWED_BY field set
         next_season_itempage = self.first_claim(wp.FOLLOWED_BY.pid)
@@ -397,7 +405,7 @@ class Season(BaseType):
             return Season(next_season_itempage)
 
         # Find the item that has the FOLLOWS field set to this item
-        query = generate_sparql_query({wp.FOLLOWS.pid: self.title})
+        query = generate_sparql_query({wp.FOLLOWS.pid: self.qid})
         gen = WikidataSPARQLPageGenerator(query)
         is_followed_by = next(gen, None)
 
@@ -411,7 +419,7 @@ class Season(BaseType):
         return None
 
     @property
-    def previous(self):
+    def previous(self) -> Optional[Season]:
         """The previous season, if any"""
         # Check if it has the FOLLOWS field set
         previous_season_itempage = self.first_claim(wp.FOLLOWS.pid)
@@ -419,7 +427,7 @@ class Season(BaseType):
             return Season(previous_season_itempage)
 
         # Find the item that has the FOLLOWED_BY field set to this item
-        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.title})
+        query = generate_sparql_query({wp.FOLLOWED_BY.pid: self.qid})
         gen = WikidataSPARQLPageGenerator(query)
         follows = next(gen, None)
 
