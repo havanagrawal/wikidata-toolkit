@@ -8,12 +8,14 @@ import properties.wikidata_properties as wp
 from sparql.query_builder import generate_sparql_query
 import sparql.queries as Q
 
+
 class BaseType():
     """The base class for wrapper classes
 
         This is mostly instance-type agnostic. It should be extended
         by more specific implementations that encapsulate a concept.
     """
+
     def __init__(self, itempage, repo=None):
         self._itempage = itempage
         self._itempage.get()
@@ -88,6 +90,7 @@ class BaseType():
         repo = Site().data_repository() if repo is None else repo
         return cls(ItemPage(repo, item_id), repo)
 
+
 class Episode(BaseType):
     """Encapsulates an item of instance 'television series episode'"""
     @property
@@ -107,8 +110,8 @@ class Episode(BaseType):
     def next(self):
         """The next episode, if any"""
         # Check if it has the FOLLOWED_BY field set
-        if wp.FOLLOWED_BY.pid in self.claims:
-            next_episode_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
+        next_episode_itempage = self.first_claim(wp.FOLLOWED_BY.pid)
+        if next_episode_itempage is not None:
             return Episode(next_episode_itempage)
 
         # Find the item that has the FOLLOWS field set to this item
@@ -133,8 +136,8 @@ class Episode(BaseType):
     def previous(self):
         """The previous episode, if any"""
         # Check if it has the FOLLOWS field set
-        if wp.FOLLOWS.pid in self.claims:
-            previous_episode_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
+        previous_episode_itempage = self.first_claim(wp.FOLLOWS.pid)
+        if previous_episode_itempage is not None:
             return Episode(previous_episode_itempage)
 
         # Find the item that has the FOLLOWED_BY field set to this item
@@ -232,9 +235,7 @@ class Episode(BaseType):
     @property
     def series_itempage(self):
         """The itempage of the series of which this episode is a part"""
-        if wp.PART_OF_THE_SERIES.pid not in self.claims:
-            return None
-        series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
+        series_itempage = self.first_claim(wp.PART_OF_THE_SERIES.pid)
         if series_itempage is None:
             return None
         series_itempage.get()
@@ -250,9 +251,7 @@ class Episode(BaseType):
     @property
     def season_itempage(self):
         """The itempage of the season of which this episode is a part"""
-        if wp.SEASON.pid not in self.claims:
-            return None
-        season_itempage = self.claims[wp.SEASON.pid][0].getTarget()
+        season_itempage = self.first_claim(wp.SEASON.pid)
         if season_itempage is None:
             return None
         season_itempage.get()
@@ -313,33 +312,39 @@ class Episode(BaseType):
             wp.PART_OF_THE_SERIES,
         )]
 
+
 class Season(BaseType):
     """Encapsulates an item of instance 'television series season'"""
+
     def __init__(self, itempage, repo=None):
         super(Season, self).__init__(itempage, repo)
         if wp.INSTANCE_OF.pid not in itempage.claims:
-            raise ValueError(f"'instance of' unset. Must be set to 'television series season' for {itempage.title()}")
-        instance_of = itempage.claims[wp.INSTANCE_OF.pid][0].getTarget().title()
+            raise ValueError(
+                f"'instance of' unset. Must be set to 'television series season' for {itempage.title()}")
+        instance_of = itempage.claims[wp.INSTANCE_OF.pid][0].getTarget(
+        ).title()
         if instance_of != wp.TELEVISION_SERIES_SEASON:
-            raise ValueError(f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}")
+            raise ValueError(
+                f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}")
 
     @property
     def parent(self):
         """The Series of which this season is a part"""
-        series_itempage = self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget()
+        series_itempage = self.first_claim(wp.PART_OF_THE_SERIES.pid)
         return Series(series_itempage)
 
     @property
     def part_of_the_series(self):
         """The ID of the series of which this episode is a part"""
-        if wp.PART_OF_THE_SERIES.pid not in self.claims:
-            return None
-        return self.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget().title()
+        series = self.first_claim(wp.PART_OF_THE_SERIES.pid)
+        if series is not None:
+            return series.title()
+        return None
 
     @property
     def ordinal_in_series(self):
         """The series ordinal for this season"""
-        if not wp.PART_OF_THE_SERIES.pid in self.claims:
+        if wp.PART_OF_THE_SERIES.pid not in self.claims:
             return None
         series_claim = self.claims[wp.PART_OF_THE_SERIES.pid][0]
         if wp.SERIES_ORDINAL.pid not in series_claim.qualifiers:
@@ -387,8 +392,8 @@ class Season(BaseType):
     def next(self):
         """The next season, if any"""
         # Check if it has the FOLLOWED_BY field set
-        if wp.FOLLOWED_BY.pid in self.claims:
-            next_season_itempage = self.claims[wp.FOLLOWED_BY.pid][0].getTarget()
+        next_season_itempage = self.first_claim(wp.FOLLOWED_BY.pid)
+        if next_season_itempage is not None:
             return Season(next_season_itempage)
 
         # Find the item that has the FOLLOWS field set to this item
@@ -409,8 +414,8 @@ class Season(BaseType):
     def previous(self):
         """The previous season, if any"""
         # Check if it has the FOLLOWS field set
-        if wp.FOLLOWS.pid in self.claims:
-            previous_season_itempage = self.claims[wp.FOLLOWS.pid][0].getTarget()
+        previous_season_itempage = self.first_claim(wp.FOLLOWS.pid)
+        if previous_season_itempage is not None:
             return Season(previous_season_itempage)
 
         # Find the item that has the FOLLOWED_BY field set to this item
@@ -459,6 +464,7 @@ class Season(BaseType):
             wp.COUNTRY_OF_ORIGIN,
             wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
         )]
+
 
 class Series(BaseType):
     """Encapsulates an item of instance 'television series'"""
