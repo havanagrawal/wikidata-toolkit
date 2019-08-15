@@ -3,9 +3,10 @@ from pywikibot.data.sparql import SparqlQuery
 
 from properties import wikidata_properties as wp
 
+
 def episodes(season_id):
     """Find episodes for a given season (specified by QID)
-    
+
         Returns an iterable of (season ordinal, episode QID, episode title)
     """
     query = f"""
@@ -23,6 +24,7 @@ def episodes(season_id):
         episode_id = result['episode'].split("/")[-1]
         title = result['episodeTitle']
         yield ordinal, episode_id, title
+
 
 def episodes_with_titles_and_missing_labels():
     """Find English show episodes with missing labels, but with a title
@@ -57,9 +59,40 @@ def episodes_with_titles_and_missing_labels():
         series_label = result['seriesLabel']
         yield episode_id, title, series_label
 
+
+def movies_with_missing_labels_with_title():
+    """Find English movies with missing labels, but with a title
+
+        Missing labels are identified by checking if the label is equal to 
+        the QID
+
+        Returns an iterable of (movie QID, title)
+    """
+    query = f"""SELECT ?movieLabel ?title ?imdbId WHERE {{
+      ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
+        wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860;
+        wdt:{wp.TITLE.pid} ?title;
+        wdt:{wp.IMDB_ID.pid}  ?imdbId.
+      FILTER((REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
+      FILTER((LANG(?title)) = "en")
+      SERVICE wikibase:label {{
+        bd:serviceParam wikibase:language "en".
+        ?movie rdfs:label ?movieLabel.
+      }}
+    }}
+    ORDER BY (?title)
+    """
+    print(query)
+    results = SparqlQuery(repo=Site().data_repository()).select(query)
+    for result in results:
+        movie_label = result['movieLabel']
+        title = result['title']
+        yield movie_label, title
+
+
 def movies_with_missing_titles():
     """find English movies with missing titles, but with label
-    
+
         Returns an iterable of (movie QID, movie label)
     """
     query = f"""
@@ -67,7 +100,9 @@ def movies_with_missing_titles():
       ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
         wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:Q1860.
       OPTIONAL {{ ?movie wdt:{wp.TITLE.pid} ?title. }}
+      OPTIONAL {{ ?movie wdt:P345  ?imdbId. }}
       FILTER(!(BOUND(?title)))
+      FILTER((BOUND(?imdbId)))
       FILTER(!(REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
       SERVICE wikibase:label {{
         bd:serviceParam wikibase:language "en".
