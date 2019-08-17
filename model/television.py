@@ -1,104 +1,70 @@
 """Wrapper classes for high-level concepts relating to TV series"""
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Optional
 
-from pywikibot import ItemPage, Site
+from pywikibot import ItemPage
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
+import constraints.general as gc
+import constraints.tv as tvc
+import model.api as api
 import properties.wikidata_properties as wp
 import sparql.queries as Q
-from constraints import *
 from sparql.query_builder import generate_sparql_query
 
 
-class BaseType():
-    """The base class for wrapper classes
-
-        This is mostly instance-type agnostic. It should be extended
-        by more specific implementations that encapsulate a concept.
-    """
-
-    def __init__(self, itempage: ItemPage, repo=None):
-        self._itempage = itempage
-        self._itempage.get()
-        self._repo = Site().data_repository() if repo is None else repo
+class TvBase(api.BaseType, ABC):
+    """Superclass for all television related entities"""
 
     @property
-    def itempage(self):
-        """The underlying ItemPage for this entity"""
-        return self._itempage
-
-    @property
-    def label(self):
-        """The English (en) label of this entity"""
-        return self._itempage.labels.get('en', None)
-
-    @property
-    def qid(self):
-        """The QID of this entity, of the form Q####"""
-        return self._itempage.title()
-
-    @property
-    def parent(self):
-        """The parent item, if the entity supports this concept"""
-        return None
-
-    @property
-    def repo(self):
-        """The underlying repo from where data for this item is fetched"""
-        return self._repo
-
-    @property
-    def claims(self):
-        """The claims of this item page
-
-            This lifts the claims property so we don't have to
-            violate Demeter's Law all the time
-        """
-        return self._itempage.claims
-
-    def first_claim(self, key, default=None):
-        """The first claim for this property, or default"""
-        if key not in self._itempage.claims:
-            return None
-        if not self._itempage.claims[key]:
-            return None
-        return self._itempage.claims[key][0].getTarget()
-
-    @property
+    @abstractmethod
     def constraints(self):
-        """An iterable of Constraints that apply to this entity"""
         return []
 
-    def refresh(self):
-        """Fetch the latest data from Wikidata for this item"""
-        self._itempage.get()
-
-    def __str__(self):
-        return f"{self.__class__.__name__}({self.qid} ({self.label}))"
-
-    def __repr__(self):
-        return str(self)
-
-    @classmethod
-    def from_id(cls, item_id, repo=None):
-        """Create an instance of the class from the item ID (QID)
-
-            Note: This does not check if the QID is the same type
-            as the wrapper class. It is recommended that the user:
-              1. uses Factory to instantiate this class, OR
-              2. ensures that the item_id is in fact the same type as the class
-        """
-        repo = Site().data_repository() if repo is None else repo
-        return cls(ItemPage(repo, item_id), repo)
+    @property
+    def title(self) -> str:
+        return self.first_claim(wp.TITLE.pid)
 
 
-class Episode(BaseType):
+class Episode(TvBase, api.Heirarchical, api.Chainable):
     """Encapsulates an item of instance 'television series episode'"""
+
     @property
     def constraints(self):
-        return self._property_constraints() + self._inheritance_constraints()
+        return (
+            [
+                gc.has_property(prop)
+                for prop in (
+                    wp.INSTANCE_OF,
+                    wp.PART_OF_THE_SERIES,
+                    wp.SEASON,
+                    wp.ORIGINAL_NETWORK,
+                    wp.COUNTRY_OF_ORIGIN,
+                    wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+                    wp.PRODUCTION_COMPANY,
+                    wp.PUBLICATION_DATE,
+                    wp.DIRECTOR,
+                    wp.DURATION,
+                    wp.IMDB_ID,
+                )
+            ]
+            + [
+                gc.follows_something(),
+                gc.is_followed_by_something(),
+                tvc.has_title(),
+                tvc.has_english_label(),
+            ]
+            + [
+                gc.inherits_property(prop)
+                for prop in (
+                    wp.COUNTRY_OF_ORIGIN,
+                    wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+                    wp.PART_OF_THE_SERIES,
+                )
+            ]
+        )
 
     @property
     def parent(self):
@@ -289,51 +255,21 @@ class Episode(BaseType):
 
         return int(series_claim.qualifiers[wp.SERIES_ORDINAL.pid][0].getTarget())
 
-    @property
-    def title(self) -> str:
-        return self.first_claim(wp.TITLE.pid)
 
-    def _property_constraints(self):
-        return [has_property(prop) for prop in (
-            wp.INSTANCE_OF,
-            wp.PART_OF_THE_SERIES,
-            wp.SEASON,
-            wp.ORIGINAL_NETWORK,
-            wp.COUNTRY_OF_ORIGIN,
-            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PRODUCTION_COMPANY,
-            wp.PUBLICATION_DATE,
-            wp.DIRECTOR,
-            wp.DURATION,
-            wp.IMDB_ID,
-        )] + [
-            follows_something(),
-            is_followed_by_something(),
-            has_title(),
-            has_english_label(),
-        ]
-
-    def _inheritance_constraints(self):
-        return [inherits_property(prop) for prop in (
-            wp.COUNTRY_OF_ORIGIN,
-            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PART_OF_THE_SERIES,
-        )]
-
-
-class Season(BaseType):
+class Season(TvBase, api.Heirarchical, api.Chainable):
     """Encapsulates an item of instance 'television series season'"""
 
-    def __init__(self, itempage, repo=None):
+    def __init__(self, itempage: ItemPage, repo=None):
         super(Season, self).__init__(itempage, repo)
         if wp.INSTANCE_OF.pid not in itempage.claims:
             raise ValueError(
-                f"'instance of' unset. Must be set to 'television series season' for {itempage.title()}")
-        instance_of = itempage.claims[wp.INSTANCE_OF.pid][0].getTarget(
-        ).title()
+                f"'instance of' unset. Must be set to 'television series season' for {itempage.title()}"
+            )
+        instance_of = itempage.claims[wp.INSTANCE_OF.pid][0].getTarget().title()
         if instance_of != wp.TELEVISION_SERIES_SEASON:
             raise ValueError(
-                f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}")
+                f"expected 'instance of' to be set to 'television series season' for {itempage.title()}, found {instance_of}"
+            )
 
     @property
     def parent(self):
@@ -448,45 +384,50 @@ class Season(BaseType):
 
     @property
     def constraints(self):
-        return self._property_constraints() + self._inheritance_constraints()
+        return (
+            [
+                gc.has_property(prop)
+                for prop in (
+                    wp.INSTANCE_OF,
+                    wp.PART_OF_THE_SERIES,
+                    wp.ORIGINAL_NETWORK,
+                    wp.COUNTRY_OF_ORIGIN,
+                    wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+                    wp.PRODUCTION_COMPANY,
+                    wp.HAS_PART,
+                    wp.NUMBER_OF_EPISODES,
+                    wp.FOLLOWS,
+                    wp.FOLLOWED_BY,
+                )
+            ]
+            + [
+                tvc.season_has_no_of_episodes_as_count_of_parts(),
+                tvc.season_has_parts(),
+            ]
+            + [
+                gc.inherits_property(prop)
+                for prop in (
+                    wp.COUNTRY_OF_ORIGIN,
+                    wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+                )
+            ]
+        )
 
-    def _property_constraints(self):
-        return [has_property(prop) for prop in (
-            wp.INSTANCE_OF,
-            wp.PART_OF_THE_SERIES,
-            wp.ORIGINAL_NETWORK,
-            wp.COUNTRY_OF_ORIGIN,
-            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PRODUCTION_COMPANY,
-            wp.HAS_PART,
-            wp.NUMBER_OF_EPISODES,
-            wp.FOLLOWS,
-            wp.FOLLOWED_BY,
-        )] + [
-            season_has_no_of_episodes_as_count_of_parts(),
-            season_has_parts(),
-        ]
 
-    def _inheritance_constraints(self):
-        return [inherits_property(prop) for prop in (
-            wp.COUNTRY_OF_ORIGIN,
-            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-        )]
-
-
-class Series(BaseType):
+class Series(TvBase, api.Heirarchical):
     """Encapsulates an item of instance 'television series'"""
+
     @property
     def constraints(self):
-        return self._property_constraints()
-
-    def _property_constraints(self):
-        return [has_property(prop) for prop in (
-            wp.INSTANCE_OF,
-            wp.TITLE,
-            wp.ORIGINAL_NETWORK,
-            wp.COUNTRY_OF_ORIGIN,
-            wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
-            wp.PRODUCTION_COMPANY,
-            wp.IMDB_ID,
-        )]
+        return [
+            gc.has_property(prop)
+            for prop in (
+                wp.INSTANCE_OF,
+                wp.TITLE,
+                wp.ORIGINAL_NETWORK,
+                wp.COUNTRY_OF_ORIGIN,
+                wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+                wp.PRODUCTION_COMPANY,
+                wp.IMDB_ID,
+            )
+        ]

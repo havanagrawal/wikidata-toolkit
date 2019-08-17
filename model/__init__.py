@@ -1,2 +1,2 @@
 from .factory import Factory
-from .television import BaseType
+from .api import BaseType

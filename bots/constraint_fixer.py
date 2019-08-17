@@ -1,7 +1,23 @@
+"""Basic checking and fixing bot implementations
+
+    These bots need to be provided with a generator of ItemPages in order to run
+
+    Current implementations provided are:
+        1. ConstraintCheckerBot
+           Performs checks on items, but does not fix them
+
+        2. ConstraintFixerBot
+           Performs checks on items, and fixes them if there are available fixes
+
+        3. AccumulatingConstraintFixerBot
+           Performs checks on items, and accumulates the fixes into a list.
+           Logs out the fixes, and then implements them once all items have been checked.
+"""
+
 import pywikibot.logging as botlogging
 from pywikibot.bot import WikidataBot
 
-from model import Factory, BaseType
+from model import BaseType, Factory
 
 
 class ConstraintCheckerBot(WikidataBot):
@@ -9,6 +25,7 @@ class ConstraintCheckerBot(WikidataBot):
 
         The generator must generate instances of ItemPage
     """
+
     use_from_page = False
 
     def __init__(self, generator, factory=Factory(), **kwargs):
@@ -16,14 +33,16 @@ class ConstraintCheckerBot(WikidataBot):
         self.factory = factory
 
     def print_failures(self, typed_item: BaseType, failed_constraints):
+        """Print failed constraints"""
         for constraint in failed_constraints:
             botlogging.error(f"{constraint} failed for {typed_item}")
 
     def print_successes(self, typed_item: BaseType, passed_constraints):
+        """Print passed constraints"""
         for constraint in passed_constraints:
             botlogging.output(f"{constraint} passed for {typed_item}", toStdout=True)
 
-    #override
+    # override
     def treat_page_and_item(self, unused_page, item):
         """Print out constraint failures
 
@@ -47,19 +66,21 @@ class ConstraintCheckerBot(WikidataBot):
         total = len(typed_item.constraints)
         failures = len(not_satisfied)
 
-        botlogging.output(f"Found {failures}/{total} constraint failures", toStdout=True)
+        botlogging.output(
+            f"Found {failures}/{total} constraint failures", toStdout=True
+        )
 
         return satisfied, not_satisfied
 
 
 class ConstraintFixerBot(ConstraintCheckerBot):
-    def __init__(self, generator, factory=Factory(), filter=None, **kwargs):
+    def __init__(self, generator, factory=Factory(), property_filter=None, **kwargs):
         super().__init__(generator=generator, factory=factory, **kwargs)
-        if filter is None:
-            filter = ""
-        self._filters = set(filter.split(","))
+        if property_filter is None:
+            property_filter = ""
+        self._filters = set(property_filter.split(","))
 
-    #override
+    # override
     def treat_page_and_item(self, unused_page, item):
         """Fix items that have constraint failures
 
@@ -70,7 +91,9 @@ class ConstraintFixerBot(ConstraintCheckerBot):
         _, not_satisfied = super().treat_page_and_item(unused_page, item)
         typed_item = self.factory.get_typed_item(item.title())
 
-        fixes = [fix for constraint in not_satisfied for fix in constraint.fix(typed_item)]
+        fixes = [
+            fix for constraint in not_satisfied for fix in constraint.fix(typed_item)
+        ]
         fixed = 0
         for claim, summary, itempage in fixes:
             skip_fix = not should_fix(summary, self._filters)
@@ -81,17 +104,21 @@ class ConstraintFixerBot(ConstraintCheckerBot):
         total = len(not_satisfied)
         botlogging.output(f"Fixed {fixed}/{total} constraint failures")
 
+
 class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
     """Accumulates all fixes, and then fixes them only when fixall is called"""
-    def __init__(self, generator, factory=Factory(), filter=None, sort=True, **kwargs):
+
+    def __init__(
+        self, generator, factory=Factory(), property_filter=None, sort=True, **kwargs
+    ):
         super().__init__(generator, factory, **kwargs)
         self.fixes = []
         self.sort = sort
-        if filter is None:
-            filter = ""
-        self._filters = set(filter.split(","))
+        if property_filter is None:
+            property_filter = ""
+        self._filters = set(property_filter.split(","))
 
-    #override
+    # override
     def treat_page_and_item(self, unused_page, item):
         """Fix items that have constraint failures
 
@@ -102,7 +129,9 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
         _, not_satisfied = super().treat_page_and_item(unused_page, item)
         typed_item = self.factory.get_typed_item(item.title())
 
-        fixes = [fix for constraint in not_satisfied for fix in constraint.fix(typed_item)]
+        fixes = [
+            fix for constraint in not_satisfied for fix in constraint.fix(typed_item)
+        ]
         self.fixes.extend(fixes)
 
     def fixall(self):
@@ -110,7 +139,9 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
             self.fixes = list(sorted(self.fixes, key=lambda f: f[1]))
 
         if self._filters:
-            self.fixes = [fix for fix in self.fixes if should_fix(fix[1], self._filters)]
+            self.fixes = [
+                fix for fix in self.fixes if should_fix(fix[1], self._filters)
+            ]
 
         for _, summary, _ in self.fixes:
             print(summary)
@@ -122,10 +153,11 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
         total = len(self.fixes)
         botlogging.output(f"Fixed {fixed}/{total} constraint failures", toStdout=True)
 
-    #override
+    # override
     def run(self):
         super().run()
         self.fixall()
+
 
 def should_fix(summary, filters):
     return any(filter in summary for filter in filters)

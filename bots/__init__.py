@@ -13,7 +13,7 @@ def getbot(
         autofix: bool,
         accumulate: bool,
         always: bool = False,
-        filter: str = None
+        property_filter: str = None
     ) -> WikidataBot:
     """Bot factory for returning an appropriate implementation of WikidataBot
 
@@ -31,7 +31,7 @@ def getbot(
         always: bool
             If True, don't prompt for confirmation on each fix, implement all
 
-        filter: str
+        property_filter: str
             A comma-separated list of properties. Only these properties will be fixed.
             Eg: "P1476"
             Eg: "title,country of origin"
@@ -39,6 +39,6 @@ def getbot(
     """
     if autofix:
         if accumulate:
-            return AccumulatingConstraintFixerBot(generator, always=always, filter=filter)
-        return ConstraintFixerBot(generator, always=always, filter=filter)
+            return AccumulatingConstraintFixerBot(generator, always=always, property_filter=property_filter)
+        return ConstraintFixerBot(generator, always=always, property_filter=property_filter)
     return ConstraintCheckerBot(generator, always=always)
