@@ -178,7 +178,7 @@ def season_has_parts() -> Constraint:
             new_claim = Claim(item.repo, wp.HAS_PART.pid)
             new_claim.setTarget(episode.itempage)
             new_claim.addQualifier(qualifier)
-            summary = f"Adding {episode.qid} to {wp.HAS_PART.pid}"
+            summary = f"Adding {episode.qid} to {wp.HAS_PART.pid} ({wp.HAS_PART.name})"
             claim_fixes.append((new_claim, summary, item.itempage))
 
         return claim_fixes
