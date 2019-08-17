@@ -443,7 +443,7 @@ class Season(BaseType):
     @property
     def parts(self):
         """An iterable of (ordinal, Episode) that are parts of this season"""
-        for ordinal, episode_id, _ in sorted(Q.episodes(self.title)):
+        for ordinal, episode_id, _ in sorted(Q.episodes(self.qid)):
             yield ordinal, Episode(ItemPage(self.repo, episode_id))
 
     @property
