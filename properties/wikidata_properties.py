@@ -8,8 +8,8 @@
     todo(havanagrawal): Support autogeneration of constants in this file
 """
 
-class WikidataProperty():
-    def __init__(self, pid, name=None):
+class WikidataProperty:
+    def __init__(self, pid: str, name: str = None):
         if not pid.startswith('P'):
             raise ValueError('Properties must begin with a P')
         try:
