@@ -27,7 +27,7 @@ def season_has_parts() -> api.Constraint:
     def check(item: model.television.Season) -> bool:
         return wp.HAS_PART.pid in item.claims
 
-    def fix(item: model.television.Season) -> Iterable:
+    def fix(item: model.television.Season) -> Iterable[Claim]:
         claim_fixes = []
 
         for ordinal, episode in item.parts:
