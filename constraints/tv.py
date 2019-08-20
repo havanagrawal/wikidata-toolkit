@@ -93,7 +93,7 @@ def has_english_label() -> api.Constraint:
     def fix(item: model.television.TvBase) -> Iterable:
         item.refresh()
         _src, _src_key = "Title", "en"
-        label = item.title
+        label = item.label
         # Lookup IMDB
         if label is None:
             imdb_id = item.first_claim(wp.IMDB_ID.pid)
@@ -105,7 +105,7 @@ def has_english_label() -> api.Constraint:
             label = tv_com_title(tv_com_id)
             _src, _src_key = "TV.com", tv_com_id
         if label is not None:
-            item.itempage.editLabels({"en": item.title})
+            item.itempage.editLabels({"en": label})
         return []
 
     return api.Constraint(check, fixer=fix, name="has_english_label()")
