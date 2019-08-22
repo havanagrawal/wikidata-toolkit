@@ -20,16 +20,16 @@ def episodes(season_id):
     """
     results = SparqlQuery(repo=Site().data_repository()).select(query)
     for result in results:
-        ordinal = int(result['seasonOrdinal'])
-        episode_id = result['episode'].split("/")[-1]
-        title = result['episodeTitle']
+        ordinal = int(result["seasonOrdinal"])
+        episode_id = result["episode"].split("/")[-1]
+        title = result["episodeTitle"]
         yield ordinal, episode_id, title
 
 
 def episodes_with_titles_and_missing_labels():
     """Find English show episodes with missing labels, but with a title
 
-        Missing labels are identified by checking if the label is equal to 
+        Missing labels are identified by checking if the label is equal to
         the QID
 
         Returns an iterable of (episode QID, title, series label)
@@ -54,16 +54,16 @@ def episodes_with_titles_and_missing_labels():
     print(query)
     results = SparqlQuery(repo=Site().data_repository()).select(query)
     for result in results:
-        episode_id = result['episode'].split("/")[-1]
-        title = result['title']
-        series_label = result['seriesLabel']
+        episode_id = result["episode"].split("/")[-1]
+        title = result["title"]
+        series_label = result["seriesLabel"]
         yield episode_id, title, series_label
 
 
 def movies_with_missing_labels_with_title():
     """Find English movies with missing labels, but with a title
 
-        Missing labels are identified by checking if the label is equal to 
+        Missing labels are identified by checking if the label is equal to
         the QID
 
         Returns an iterable of (movie QID, title)
@@ -86,8 +86,8 @@ def movies_with_missing_labels_with_title():
     print(query)
     results = SparqlQuery(repo=Site().data_repository()).select(query)
     for result in results:
-        movie_label = result['movieLabel']
-        title = result['title']
+        movie_label = result["movieLabel"]
+        title = result["title"]
         yield movie_label, title
 
 
@@ -116,20 +116,20 @@ def movies_with_missing_titles():
     print(query)
     results = SparqlQuery(repo=Site().data_repository()).select(query)
     for result in results:
-        movie_id = result['movie'].split("/")[-1]
-        movie_label = result['movieLabel']
+        movie_id = result["movie"].split("/")[-1]
+        movie_label = result["movieLabel"]
         yield movie_id, movie_label
 
 
 def books_with_missing_labels_with_title():
-  """Find English books with missing labels, but with a title
+    """Find English books with missing labels, but with a title
 
-      Missing labels are identified by checking if the label is equal to 
+      Missing labels are identified by checking if the label is equal to
       the QID
 
       Returns an iterable of (book QID, title)
   """
-  query = f"""
+    query = f"""
   SELECT ?book ?bookLabel ?title WHERE {{
     ?book wdt:{wp.INSTANCE_OF.pid} wd:{wp.BOOK};
       wdt:{wp.LANGUAGE_OF_WORK_OR_NAME.pid} wd:{wp.ENGLISH};
@@ -143,9 +143,45 @@ def books_with_missing_labels_with_title():
   }}
   ORDER BY (?title)
   """
-  print(query)
-  results = SparqlQuery(repo=Site().data_repository()).select(query)
-  for result in results:
-      book_label = result['bookLabel']
-      title = result['title']
-      yield book_label, title
+    print(query)
+    results = SparqlQuery(repo=Site().data_repository()).select(query)
+    for result in results:
+        book_label = result["bookLabel"]
+        title = result["title"]
+        yield book_label, title
+
+
+def items_with_missing_labels_with_title():
+    """Find items with missing labels, but with a title
+
+      Missing labels are identified by checking if the label is equal to
+      the QID
+
+      Returns an iterable of (item, item QID, title)
+  """
+    query = f"""
+  SELECT DISTINCT ?item ?itemId ?title WHERE {{
+    ?item wdt:{wp.INSTANCE_OF.pid} ?itemType;
+      wdt:{wp.TITLE.pid} ?title.
+    VALUES ?itemType {{
+      wd:{wp.TELEVISION_SERIES}
+      wd:{wp.TELEVISION_SERIES_EPISODE}
+      wd:{wp.BOOK}
+      wd:{wp.FILM}
+    }}
+    BIND(SUBSTR(STR(?item), 32 ) AS ?itemId)
+    FILTER((LANG(?title)) = "en")
+    FILTER(REGEX(?itemLabel, SUBSTR(STR(?item), 32 )))
+    SERVICE wikibase:label {{
+      bd:serviceParam wikibase:language "en".
+      ?item rdfs:label ?itemLabel.
+    }}
+  }}
+  """
+    print(query)
+    results = SparqlQuery(repo=Site().data_repository()).select(query)
+    for result in results:
+        item_link = result["item"]
+        item_id = result["itemId"]
+        title = result["title"]
+        yield item_link, item_id, title
