@@ -49,5 +49,21 @@ def episode(src, dest):
     _clone(src, dest, props)
 
 
+@clone.command()
+@click.argument("src")
+@click.argument("dest")
+def season(src, dest):
+    """Clone an season's properties from SRC to DEST"""
+    props = [
+        wp.INSTANCE_OF,
+        wp.PART_OF_THE_SERIES,
+        wp.ORIGINAL_NETWORK,
+        wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
+        wp.COUNTRY_OF_ORIGIN,
+    ]
+
+    _clone(src, dest, props)
+
+
 if __name__ == "__main__":
     clone()
