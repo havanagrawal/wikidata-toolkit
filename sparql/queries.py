@@ -164,14 +164,20 @@ def items_with_missing_labels_with_title():
     ?item wdt:{wp.INSTANCE_OF.pid} ?itemType;
       wdt:{wp.TITLE.pid} ?title.
     VALUES ?itemType {{
-      wd:{wp.TELEVISION_SERIES}
-      wd:{wp.TELEVISION_SERIES_EPISODE}
-      wd:{wp.BOOK}
-      wd:{wp.FILM}
+      wd:{wp.TELEVISION_SERIES.ljust(10, " ")} # television series
+      wd:{wp.TELEVISION_SERIES_EPISODE.ljust(10, " ")} # television series episode
+      wd:{wp.BOOK.ljust(10, " ")} # book
+      wd:{wp.FILM.ljust(10, " ")} # film
     }}
+    # Skip "http://www.wikidata.org/entity/" (31 characters)
     BIND(SUBSTR(STR(?item), 32 ) AS ?itemId)
+
+    # Only look for titles that are in English, since we add the English label
     FILTER((LANG(?title)) = "en")
-    FILTER(REGEX(?itemLabel, SUBSTR(STR(?item), 32 )))
+
+    # The label will be the same as the QID if the label is missing
+    FILTER(REGEX(?itemLabel, ?itemId))
+
     SERVICE wikibase:label {{
       bd:serviceParam wikibase:language "en".
       ?item rdfs:label ?itemLabel.
