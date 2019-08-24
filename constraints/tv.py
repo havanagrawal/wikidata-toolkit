@@ -27,7 +27,7 @@ def season_has_parts() -> api.Constraint:
     def check(item: model.television.Season) -> bool:
         return wp.HAS_PART.pid in item.claims
 
-    def fix(item: model.television.Season) -> Iterable[Claim]:
+    def fix(item: model.television.Season) -> Iterable[api.Fix]:
         claim_fixes = []
 
         for ordinal, episode in item.parts:
@@ -38,7 +38,7 @@ def season_has_parts() -> api.Constraint:
             new_claim.setTarget(episode.itempage)
             new_claim.addQualifier(qualifier)
             summary = f"Adding {episode.qid} to {wp.HAS_PART.pid} ({wp.HAS_PART.name})"
-            claim_fixes.append((new_claim, summary, item.itempage))
+            claim_fixes.append(api.ClaimFix(new_claim, summary, item.itempage))
 
         return claim_fixes
 
@@ -51,7 +51,7 @@ def has_title() -> api.Constraint:
     def check(item: model.television.TvBase) -> bool:
         return wp.TITLE.pid in item.claims
 
-    def fix(item: model.television.TvBase) -> Iterable:
+    def fix(item: model.television.TvBase) -> Iterable[api.Fix]:
         title = None
         # For logging only
         _src, _src_key = None, None
@@ -76,7 +76,7 @@ def has_title() -> api.Constraint:
         new_claim = Claim(item.repo, wp.TITLE.pid)
         new_claim.setTarget(WbMonolingualText(title, "en"))
         summary = f"Setting {wp.TITLE} to {title}"
-        return [(new_claim, summary, item.itempage)]
+        return [api.ClaimFix(new_claim, summary, item.itempage)]
 
     return api.Constraint(check, fixer=fix, name="has_title()")
 
@@ -105,7 +105,7 @@ def has_english_label() -> api.Constraint:
             label = tv_com_title(tv_com_id)
             _src, _src_key = "TV.com", tv_com_id
         if label is not None:
-            item.itempage.editLabels({"en": label})
+            return [api.LabelFix(label, "en", item.itempage)]
         return []
 
     return api.Constraint(check, fixer=fix, name="has_english_label()")
