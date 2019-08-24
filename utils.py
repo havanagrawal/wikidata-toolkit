@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from pywikibot import Claim, Site, ItemPage
 
+import constraints.api as api
 import properties.wikidata_properties as wp
 
 
@@ -27,7 +28,7 @@ def printable_target_value(value):
 
 def copy_delayed(
     src_item: ItemPage, dest_item: ItemPage, props: Iterable[wp.WikidataProperty]
-) -> Iterable[Claim]:
+) -> Iterable[api.Fix]:
     repo = Site().data_repository()
 
     src_item.get()
@@ -62,7 +63,7 @@ def copy_delayed(
             new_claim = Claim(repo, prop.pid)
             new_claim.setTarget(target)
             summary = f"Setting {prop.pid} ({prop.name})"
-            claims.append((new_claim, summary, dest_item))
+            claims.append(api.ClaimFix(new_claim, summary, dest_item))
     return claims
 
 
