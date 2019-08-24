@@ -1,6 +1,10 @@
 """Constraint abstract definition"""
+from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Callable, Iterable
+
+from pywikibot import Claim, ItemPage
 
 
 class Constraint:
@@ -32,7 +36,7 @@ class Constraint:
         """Return True if the item satisfies the constraint, else False"""
         return self._validator(item)
 
-    def fix(self, item) -> Iterable:
+    def fix(self, item) -> Iterable[Fix]:
         """Return a list of claims that, if implemented, will fix the constraint failure"""
         if self._fixer is None:
             print(f"No autofix available for {self._name}:{item}")
@@ -44,3 +48,51 @@ class Constraint:
 
     def __repr__(self):
         return self.__str__()
+
+
+class Fix(ABC):
+    """A Fix represents a command that can be executed to fix a constraint failure
+
+        It has 3 subclasses: ClaimFix, LabelFix and DescriptionFix.
+
+        In order to apply the fix, the user must call "apply" on an instance of this class.
+    """
+    @abstractmethod
+    def apply(self, *args, **kwargs):
+        """Apply this fix, i.e. update the item on Wikidata"""
+        pass
+
+
+class ClaimFix(Fix):
+    """A Fix to update the item by adding a Claim"""
+    def __init__(self, claim: Claim, summary: str, itempage: ItemPage):
+        self.claim = claim
+        self.summary = summary
+        self.itempage = itempage
+
+    def apply(self, func, *args, **kwargs):
+        return func(item=self.itempage, claim=self.claim, summary=self.summary)
+
+
+class LabelFix(Fix):
+    """A Fix to update the item by adding a label"""
+    def __init__(self, label: str, lang: str, itempage: ItemPage):
+        self.label = label
+        self.lang = lang
+        self.itempage = itempage
+        self.summary = f'Adding {lang} label: {label} to {itempage.title()}'
+
+    def apply(self, *args, **kwargs):
+        self.itempage.editLabels({self.lang: self.label})
+
+
+class DescriptionFix(Fix):
+    """A Fix to update the item by adding a description"""
+    def __init__(self, description: str, lang: str, itempage: ItemPage):
+        self.description = description
+        self.lang = lang
+        self.itempage = itempage
+        self.summary = f'Adding {lang} description: {description} to {itempage.title()}'
+
+    def apply(self, *args, **kwargs):
+        self.itempage.editDescriptions({self.lang: self.description})
