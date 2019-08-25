@@ -82,15 +82,11 @@ def has_title() -> api.Constraint:
 
 
 def has_english_label() -> api.Constraint:
-    """Check if an item has an English label
-
-        This fix cannot be accumulated.
-    """
-
+    """Check if an item has an English label"""
     def check(item: model.television.TvBase) -> bool:
         return item.label is not None
 
-    def fix(item: model.television.TvBase) -> Iterable:
+    def fix(item: model.television.TvBase) -> Iterable[api.LabelFix]:
         item.refresh()
         _src, _src_key = "Title", "en"
         label = item.label
@@ -109,3 +105,38 @@ def has_english_label() -> api.Constraint:
         return []
 
     return api.Constraint(check, fixer=fix, name="has_english_label()")
+
+
+def episode_has_english_description() -> api.Constraint:
+    """Check if an episode has an English description
+
+        The fix is to use (in decreasing order of preference)
+            1. 'episode of <series> (S<season_no> E<episode_no>)'
+            2. 'episode of <series> (S<season_no>)'
+            3. 'episode of <series>'
+    """
+    def check(item: model.television.Episode) -> bool:
+        return item.description is not None
+
+    def fix(item: model.television.Episode) -> Iterable[api.DescriptionFix]:
+        def _description(item: model.television.Episode):
+            if item.series is None or item.series.title is None:
+                return None
+
+            series_name = item.series.title
+            if item.season is None or item.season.ordinal_in_series is None:
+                return f"episode of {series_name}"
+
+            season_no = str(item.season.ordinal_in_series).rjust(2, "0")
+            if item.ordinal_in_season is None:
+                return f"episode of {series_name} (S{season_no})"
+
+            episode_no = str(item.ordinal_in_season).rjust(2, "0")
+            return f"episode of {series_name} (S{season_no} E{episode_no})"
+
+        description = _description(item)
+        if description is None:
+            return []
+        return [api.DescriptionFix(description, lang="en", itempage=item.itempage)]
+
+    return api.Constraint(check, fixer=fix, name="episode_has_english_description()")

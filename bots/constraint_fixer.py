@@ -161,4 +161,3 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
 
 def should_fix(fix, filters):
     return any(filter in fix.summary for filter in filters)
-

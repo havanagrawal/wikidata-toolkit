@@ -30,6 +30,11 @@ class BaseType(ABC):
         return self._itempage.labels.get("en", None)
 
     @property
+    def description(self) -> Optional[str]:
+        """The English (en) description of this entity"""
+        return self._itempage.descriptions.get("en", None)
+
+    @property
     def qid(self) -> str:
         """The QID of this entity, of the form Q####"""
         return self._itempage.title()

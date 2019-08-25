@@ -80,10 +80,16 @@ class LabelFix(Fix):
         self.label = label
         self.lang = lang
         self.itempage = itempage
-        self.summary = f'Adding {lang} label: {label} to {itempage.title()}'
+        self.summary = f"Adding {lang} label: '{label}' to {itempage.title()}"
 
     def apply(self, *args, **kwargs):
-        self.itempage.editLabels({self.lang: self.label})
+        try:
+            change = input(f"Add label='{self.label}' for {self.itempage} (y/N)? ")
+            if change.lower() == "y":
+                self.itempage.editLabels({self.lang: self.label})
+        except:
+            return False
+        return True
 
 
 class DescriptionFix(Fix):
@@ -92,7 +98,13 @@ class DescriptionFix(Fix):
         self.description = description
         self.lang = lang
         self.itempage = itempage
-        self.summary = f'Adding {lang} description: {description} to {itempage.title()}'
+        self.summary = f"Adding {lang} description: '{description}' to {itempage.title()}"
 
     def apply(self, *args, **kwargs):
-        self.itempage.editDescriptions({self.lang: self.description})
+        try:
+            change = input(f"Add description='{self.description}' for {self.itempage} (y/N)? ")
+            if change.lower() == "y":
+                self.itempage.editDescriptions({self.lang: self.description})
+        except:
+            return False
+        return True

@@ -27,7 +27,7 @@ In general, Wikidata is an incredibly useful open-source data source, and any co
 
 ## Design
 
-![Architecture Diagram](./architecture.png)
+![Architecture Diagram](./classes.png)
 
 [`constraint.py`](./constraints/api.py) contains the abstract definition for the concept of a _Constraint_. This is similar to how Wikidata defines constraints, except that the implementation may contain a way to fix them.
 
