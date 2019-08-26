@@ -6,7 +6,7 @@ from pywikibot import Claim
 
 import model.api
 import properties.wikidata_properties as wp
-from constraints.api import Constraint
+from constraints.api import Constraint, Fix, ClaimFix
 from utils import copy_delayed
 
 
@@ -47,7 +47,7 @@ def inherits_property(prop: wp.WikidataProperty) -> Constraint:
 
         return item_titles == parent_titles
 
-    def fix(item: model.api.Heirarchical) -> Iterable:
+    def fix(item: model.api.Heirarchical) -> Iterable[Fix]:
         if item.parent is None or prop.pid not in item.parent.claims:
             return []
 
@@ -62,7 +62,7 @@ def follows_something() -> Constraint:
     def check(item: model.api.Chainable) -> bool:
         return wp.FOLLOWS.pid in item.claims
 
-    def fix(item: model.api.Chainable) -> Iterable:
+    def fix(item: model.api.Chainable) -> Iterable[Fix]:
         follows = item.previous
 
         if follows is None:
@@ -72,7 +72,7 @@ def follows_something() -> Constraint:
         new_claim = Claim(item.repo, wp.FOLLOWS.pid)
         new_claim.setTarget(follows.itempage)
         summary = f"Setting {wp.FOLLOWS.pid} ({wp.FOLLOWS.name})"
-        return [(new_claim, summary, item.itempage)]
+        return [ClaimFix(new_claim, summary, item.itempage)]
 
     return Constraint(check, fixer=fix, name=f"follows_something()")
 
@@ -83,7 +83,7 @@ def is_followed_by_something() -> Constraint:
     def check(item: model.api.Chainable) -> bool:
         return wp.FOLLOWED_BY.pid in item.claims
 
-    def fix(item: model.api.Chainable) -> Iterable:
+    def fix(item: model.api.Chainable) -> Iterable[Fix]:
         is_followed_by = item.next
 
         if is_followed_by is None:
@@ -93,6 +93,6 @@ def is_followed_by_something() -> Constraint:
         new_claim = Claim(item.repo, wp.FOLLOWED_BY.pid)
         new_claim.setTarget(is_followed_by.itempage)
         summary = f"Setting {wp.FOLLOWED_BY.pid} ({wp.FOLLOWED_BY.name})"
-        return [(new_claim, summary, item.itempage)]
+        return [ClaimFix(new_claim, summary, item.itempage)]
 
     return Constraint(check, fixer=fix, name=f"is_followed_by_something()")

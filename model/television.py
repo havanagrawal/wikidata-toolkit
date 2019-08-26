@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from pywikibot import ItemPage
+from pywikibot import ItemPage, WbMonolingualText
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
 import constraints.general as gc
@@ -24,8 +24,12 @@ class TvBase(api.BaseType, ABC):
         return []
 
     @property
-    def title(self) -> str:
-        return self.first_claim(wp.TITLE.pid)
+    def title(self) -> Optional[str]:
+        """The English (en) title (P1476) of this entity"""
+        title_wb: WbMonolingualText = self.first_claim(wp.TITLE.pid)
+        if title_wb is None or title_wb.language != 'en':
+            return None
+        return title_wb.text
 
 
 class Episode(TvBase, api.Heirarchical, api.Chainable):
@@ -55,6 +59,7 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
                 gc.is_followed_by_something(),
                 tvc.has_title(),
                 tvc.has_english_label(),
+                tvc.episode_has_english_description(),
             ]
             + [
                 gc.inherits_property(prop)
@@ -69,11 +74,14 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
     @property
     def parent(self):
         """The Season/Series of this Episode"""
-        if self.season_itempage is None:
-            if self.series_itempage is None:
-                return None
-            return Series(self.series_itempage)
-        return Season(self.season_itempage)
+        if self.season_itempage is not None:
+            return self.season
+
+        if self.series_itempage is not None:
+            return self.series
+
+        return None
+
 
     @property
     def next(self) -> Optional[Episode]:
@@ -134,8 +142,8 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
-            ?item wdt:{wp.SEASON.pid} wd:{self.season}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
+            ?item wdt:{wp.SEASON.pid} wd:{self.season_qid}.
             ?item p:{wp.SEASON.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_season - 1}"
             }}
         """
@@ -153,8 +161,8 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
-            ?item wdt:{wp.SEASON.pid} wd:{self.season}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
+            ?item wdt:{wp.SEASON.pid} wd:{self.season_qid}.
             ?item p:{wp.SEASON.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_season + 1}"
             }}
         """
@@ -172,7 +180,7 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series - 1}"
             }}
         """
@@ -190,7 +198,7 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_EPISODE}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
             }}
         """
@@ -211,14 +219,20 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
         return series_itempage
 
     @property
-    def part_of_the_series(self) -> Optional[str]:
+    def series(self) -> Optional[Series]:
+        if self.series_itempage is None:
+            return None
+        return Series(self.series_itempage, self._repo)
+
+    @property
+    def series_qid(self) -> Optional[str]:
         """The ID of the series of which this episode is a part"""
         if self.series_itempage is None:
             return None
         return self.series_itempage.title()
 
     @property
-    def season_itempage(self):
+    def season_itempage(self) -> Optional[ItemPage]:
         """The itempage of the season of which this episode is a part"""
         season_itempage = self.first_claim(wp.SEASON.pid)
         if season_itempage is None:
@@ -227,8 +241,14 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
         return season_itempage
 
     @property
-    def season(self) -> Optional[str]:
+    def season(self) -> Optional[Season]:
         """The ID of the season of which this episode is a part"""
+        if self.season_itempage is None:
+            return None
+        return Season(self.season_itempage, self._repo)
+
+    @property
+    def season_qid(self) -> Optional[str]:
         if self.season_itempage is None:
             return None
         return self.season_itempage.title()
@@ -278,7 +298,7 @@ class Season(TvBase, api.Heirarchical, api.Chainable):
         return Series(series_itempage)
 
     @property
-    def part_of_the_series(self) -> Optional[str]:
+    def series_qid(self) -> Optional[str]:
         """The ID of the series of which this episode is a part"""
         series = self.first_claim(wp.PART_OF_THE_SERIES.pid)
         if series is not None:
@@ -303,7 +323,7 @@ class Season(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_SEASON}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series + 1}"
             }}
         """
@@ -321,7 +341,7 @@ class Season(TvBase, api.Heirarchical, api.Chainable):
             return None
         query = f"""SELECT ?item WHERE {{
             ?item wdt:{wp.INSTANCE_OF.pid} wd:{wp.TELEVISION_SERIES_SEASON}.
-            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.part_of_the_series}.
+            ?item wdt:{wp.PART_OF_THE_SERIES.pid} wd:{self.series_qid}.
             ?item p:{wp.PART_OF_THE_SERIES.pid}/pq:{wp.SERIES_ORDINAL.pid} "{self.ordinal_in_series - 1}"
             }}
         """

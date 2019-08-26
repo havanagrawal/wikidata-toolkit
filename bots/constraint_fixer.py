@@ -95,11 +95,11 @@ class ConstraintFixerBot(ConstraintCheckerBot):
             fix for constraint in not_satisfied for fix in constraint.fix(typed_item)
         ]
         fixed = 0
-        for claim, summary, itempage in fixes:
-            skip_fix = not should_fix(summary, self._filters)
+        for fix in fixes:
+            skip_fix = not should_fix(fix, self._filters)
             if self._filters and skip_fix:
                 continue
-            success = self.user_add_claim(itempage, claim, summary=summary)
+            success = fix.apply(self.user_add_claim)
             fixed += success
         total = len(not_satisfied)
         botlogging.output(f"Fixed {fixed}/{total} constraint failures")
@@ -136,19 +136,19 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
 
     def fixall(self):
         if self.sort:
-            self.fixes = list(sorted(self.fixes, key=lambda f: f[1]))
+            self.fixes = list(sorted(self.fixes, key=lambda f: f.summary))
 
         if self._filters:
             self.fixes = [
-                fix for fix in self.fixes if should_fix(fix[1], self._filters)
+                fix for fix in self.fixes if should_fix(fix, self._filters)
             ]
 
-        for _, summary, _ in self.fixes:
-            print(summary)
+        for fix in self.fixes:
+            print(fix.summary)
 
         fixed = 0
-        for claim, summary, itempage in self.fixes:
-            success = self.user_add_claim(itempage, claim, summary=summary)
+        for fix in self.fixes:
+            success = fix.apply(self.user_add_claim)
             fixed += int(success)
         total = len(self.fixes)
         botlogging.output(f"Fixed {fixed}/{total} constraint failures", toStdout=True)
@@ -159,5 +159,5 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
         self.fixall()
 
 
-def should_fix(summary, filters):
-    return any(filter in summary for filter in filters)
+def should_fix(fix, filters):
+    return any(filter in fix.summary for filter in filters)

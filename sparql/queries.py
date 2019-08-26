@@ -168,6 +168,7 @@ def items_with_missing_labels_with_title():
       wd:{wp.TELEVISION_SERIES_EPISODE.ljust(10, " ")} # television series episode
       wd:{wp.BOOK.ljust(10, " ")} # book
       wd:{wp.FILM.ljust(10, " ")} # film
+      wd:{wp.LITERARY_WORK.ljust(10, " ")} # literary work
     }}
     # Skip "http://www.wikidata.org/entity/" (31 characters)
     BIND(SUBSTR(STR(?item), 32 ) AS ?itemId)

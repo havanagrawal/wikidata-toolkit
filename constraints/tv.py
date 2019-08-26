@@ -27,7 +27,7 @@ def season_has_parts() -> api.Constraint:
     def check(item: model.television.Season) -> bool:
         return wp.HAS_PART.pid in item.claims
 
-    def fix(item: model.television.Season) -> Iterable[Claim]:
+    def fix(item: model.television.Season) -> Iterable[api.Fix]:
         claim_fixes = []
 
         for ordinal, episode in item.parts:
@@ -38,7 +38,7 @@ def season_has_parts() -> api.Constraint:
             new_claim.setTarget(episode.itempage)
             new_claim.addQualifier(qualifier)
             summary = f"Adding {episode.qid} to {wp.HAS_PART.pid} ({wp.HAS_PART.name})"
-            claim_fixes.append((new_claim, summary, item.itempage))
+            claim_fixes.append(api.ClaimFix(new_claim, summary, item.itempage))
 
         return claim_fixes
 
@@ -51,7 +51,7 @@ def has_title() -> api.Constraint:
     def check(item: model.television.TvBase) -> bool:
         return wp.TITLE.pid in item.claims
 
-    def fix(item: model.television.TvBase) -> Iterable:
+    def fix(item: model.television.TvBase) -> Iterable[api.Fix]:
         title = None
         # For logging only
         _src, _src_key = None, None
@@ -76,21 +76,17 @@ def has_title() -> api.Constraint:
         new_claim = Claim(item.repo, wp.TITLE.pid)
         new_claim.setTarget(WbMonolingualText(title, "en"))
         summary = f"Setting {wp.TITLE} to {title}"
-        return [(new_claim, summary, item.itempage)]
+        return [api.ClaimFix(new_claim, summary, item.itempage)]
 
     return api.Constraint(check, fixer=fix, name="has_title()")
 
 
 def has_english_label() -> api.Constraint:
-    """Check if an item has an English label
-
-        This fix cannot be accumulated.
-    """
-
+    """Check if an item has an English label"""
     def check(item: model.television.TvBase) -> bool:
         return item.label is not None
 
-    def fix(item: model.television.TvBase) -> Iterable:
+    def fix(item: model.television.TvBase) -> Iterable[api.LabelFix]:
         item.refresh()
         _src, _src_key = "Title", "en"
         label = item.label
@@ -105,7 +101,42 @@ def has_english_label() -> api.Constraint:
             label = tv_com_title(tv_com_id)
             _src, _src_key = "TV.com", tv_com_id
         if label is not None:
-            item.itempage.editLabels({"en": label})
+            return [api.LabelFix(label, "en", item.itempage)]
         return []
 
     return api.Constraint(check, fixer=fix, name="has_english_label()")
+
+
+def episode_has_english_description() -> api.Constraint:
+    """Check if an episode has an English description
+
+        The fix is to use (in decreasing order of preference)
+            1. 'episode of <series> (S<season_no> E<episode_no>)'
+            2. 'episode of <series> (S<season_no>)'
+            3. 'episode of <series>'
+    """
+    def check(item: model.television.Episode) -> bool:
+        return item.description is not None
+
+    def fix(item: model.television.Episode) -> Iterable[api.DescriptionFix]:
+        def _description(item: model.television.Episode):
+            if item.series is None or item.series.title is None:
+                return None
+
+            series_name = item.series.title
+            if item.season is None or item.season.ordinal_in_series is None:
+                return f"episode of {series_name}"
+
+            season_no = str(item.season.ordinal_in_series).rjust(2, "0")
+            if item.ordinal_in_season is None:
+                return f"episode of {series_name} (S{season_no})"
+
+            episode_no = str(item.ordinal_in_season).rjust(2, "0")
+            return f"episode of {series_name} (S{season_no} E{episode_no})"
+
+        description = _description(item)
+        if description is None:
+            return []
+        return [api.DescriptionFix(description, lang="en", itempage=item.itempage)]
+
+    return api.Constraint(check, fixer=fix, name="episode_has_english_description()")
