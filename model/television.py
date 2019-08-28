@@ -27,7 +27,7 @@ class TvBase(api.BaseType, ABC):
     def title(self) -> Optional[str]:
         """The English (en) title (P1476) of this entity"""
         title_wb: WbMonolingualText = self.first_claim(wp.TITLE.pid)
-        if title_wb is None or title_wb.language != 'en':
+        if title_wb is None or title_wb.language != "en":
             return None
         return title_wb.text
 
@@ -81,7 +81,6 @@ class Episode(TvBase, api.Heirarchical, api.Chainable):
             return self.series
 
         return None
-
 
     @property
     def next(self) -> Optional[Episode]:
@@ -450,4 +449,4 @@ class Series(TvBase, api.Heirarchical):
                 wp.PRODUCTION_COMPANY,
                 wp.IMDB_ID,
             )
-        ]
+        ] + [tvc.series_has_no_of_episodes()]
