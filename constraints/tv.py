@@ -13,10 +13,10 @@ from utils import imdb_title, tv_com_title, no_of_episodes
 
 def season_has_no_of_episodes_as_count_of_parts() -> api.Constraint:
     def check(item: model.television.Season) -> bool:
-        return all(
-            wp.HAS_PART.pid in item.claims,
-            wp.NUMBER_OF_EPISODES.pid in item.claims,
-            len(item.claims[wp.HAS_PART.pid])
+        return (
+            wp.HAS_PART.pid in item.claims
+            and wp.NUMBER_OF_EPISODES.pid in item.claims
+            and len(item.claims[wp.HAS_PART.pid])
             == int(item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount),
         )
 
