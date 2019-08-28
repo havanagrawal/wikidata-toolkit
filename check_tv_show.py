@@ -1,6 +1,7 @@
 """Check constraints for season/episodes of a TV show"""
 
 import click
+from pywikibot import ItemPage, Site
 from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 
 from bots import getbot
@@ -10,7 +11,7 @@ from click_utils import validate_item_id
 
 @click.command()
 @click.argument("tvshow_id", callback=validate_item_id)
-@click.option("--child_type", type=click.Choice(["episode", "season", "all"]))
+@click.option("--child_type", type=click.Choice(["episode", "season", "series", "all"]))
 @click.option("--autofix", is_flag=True, default=False, help="Fix constraint violations")
 @click.option("--accumulate", is_flag=True, default=False, help="Accumulate all fixes before applying them")
 @click.option("--always", is_flag=True, default=False, help="Don't prompt for confirmation, apply all fixes")
@@ -24,8 +25,10 @@ def check_tv_show(tvshow_id=None, child_type="episode", autofix=False, accumulat
         instance_types = [wp.TELEVISION_SERIES_EPISODE]
     elif child_type == "season":
         instance_types = [wp.TELEVISION_SERIES_SEASON]
+    elif child_type == "series":
+        instance_types = [wp.TELEVISION_SERIES]
     elif child_type == "all":
-        instance_types = [wp.TELEVISION_SERIES_SEASON, wp.TELEVISION_SERIES_EPISODE]
+        instance_types = [wp.TELEVISION_SERIES, wp.TELEVISION_SERIES_SEASON, wp.TELEVISION_SERIES_EPISODE]
 
     for instance_of_type in instance_types:
         key_val_pairs = {
@@ -34,6 +37,8 @@ def check_tv_show(tvshow_id=None, child_type="episode", autofix=False, accumulat
         }
         query = generate_sparql_query(key_val_pairs)
         gen = WikidataSPARQLPageGenerator(query)
+        if instance_of_type == wp.TELEVISION_SERIES:
+            gen = [ItemPage(Site().data_repository(), tvshow_id)]
         bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=always, property_filter=filter)
         bot.run()
 

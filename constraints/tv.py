@@ -3,21 +3,21 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from pywikibot import Claim, WbMonolingualText
+from pywikibot import Claim, WbMonolingualText, WbQuantity
 
 import constraints.api as api
 import model.television
 import properties.wikidata_properties as wp
-from utils import imdb_title, tv_com_title
+from utils import imdb_title, tv_com_title, no_of_episodes
 
 
 def season_has_no_of_episodes_as_count_of_parts() -> api.Constraint:
     def check(item: model.television.Season) -> bool:
-        return (
-            wp.HAS_PART.pid in item.claims
-            and wp.NUMBER_OF_EPISODES.pid in item.claims
-            and len(item.claims[wp.HAS_PART.pid])
-            == int(item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount)
+        return all(
+            wp.HAS_PART.pid in item.claims,
+            wp.NUMBER_OF_EPISODES.pid in item.claims,
+            len(item.claims[wp.HAS_PART.pid])
+            == int(item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount),
         )
 
     return api.Constraint(check, name=f"season_has_no_of_episodes_as_count_of_parts()")
@@ -83,6 +83,7 @@ def has_title() -> api.Constraint:
 
 def has_english_label() -> api.Constraint:
     """Check if an item has an English label"""
+
     def check(item: model.television.TvBase) -> bool:
         return item.label is not None
 
@@ -115,6 +116,7 @@ def episode_has_english_description() -> api.Constraint:
             2. 'episode of <series> (S<season_no>)'
             3. 'episode of <series>'
     """
+
     def check(item: model.television.Episode) -> bool:
         return item.description is not None
 
@@ -140,3 +142,24 @@ def episode_has_english_description() -> api.Constraint:
         return [api.DescriptionFix(description, lang="en", itempage=item.itempage)]
 
     return api.Constraint(check, fixer=fix, name="episode_has_english_description()")
+
+
+def series_has_no_of_episodes():
+    def check(item: model.television.Series) -> bool:
+        return wp.NUMBER_OF_EPISODES.pid in item.claims
+
+    def fix(item: model.television.Series) -> Iterable[api.ClaimFix]:
+        if wp.IMDB_ID.pid not in item.claims:
+            return []
+
+        number_of_episodes = no_of_episodes(item.first_claim(wp.IMDB_ID.pid))
+        if number_of_episodes is None:
+            return []
+
+        claim = Claim(item.repo, wp.NUMBER_OF_EPISODES.pid)
+        claim.setTarget(WbQuantity(number_of_episodes, site=item.repo))
+        summary = f"Setting {wp.NUMBER_OF_EPISODES} to {number_of_episodes}"
+
+        return [api.ClaimFix(claim, summary=summary, itempage=item.itempage)]
+
+    return api.Constraint(check, fixer=fix, name=f"series_has_no_of_episodes()")

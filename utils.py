@@ -1,6 +1,6 @@
 from typing import Iterable
 import click
-
+import re
 import requests
 from bs4 import BeautifulSoup
 from pywikibot import Claim, Site, ItemPage
@@ -89,6 +89,27 @@ def tv_com_title(tv_com_id):
     return None
 
 
+def no_of_episodes(imdb_id):
+    if imdb_id is None:
+        return None
+
+    response = requests.get(f"https://www.imdb.com/title/{imdb_id}")
+    soup = BeautifulSoup(response.content, features="lxml")
+    maybe_episode_counts = (
+        x.get_text().strip() for x in soup.select("span.bp_sub_heading")
+    )
+
+    pattern = "(\d+)\s+episodes"
+
+    matches = (re.match(pattern, no_of_epis) for no_of_epis in maybe_episode_counts)
+    matches = list(filter(None, matches))
+
+    if not matches:
+        return None
+
+    return int(matches[0].group(1))
+
+
 class RepoUtils:
     def __init__(self, repo=None):
         if repo is None:
@@ -138,7 +159,7 @@ class RepoUtils:
             targets = [claim.getTarget() for claim in src_claims]
 
             for target in targets:
-                if hasattr(target, 'get'):
+                if hasattr(target, "get"):
                     target.get()
 
                 target_str = printable_target_value(target)
