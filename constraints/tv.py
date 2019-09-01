@@ -17,7 +17,7 @@ def season_has_no_of_episodes_as_count_of_parts() -> api.Constraint:
             wp.HAS_PART.pid in item.claims
             and wp.NUMBER_OF_EPISODES.pid in item.claims
             and len(item.claims[wp.HAS_PART.pid])
-            == int(item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount),
+            == int(item.first_claim(wp.NUMBER_OF_EPISODES.pid).amount)
         )
 
     return api.Constraint(check, name=f"season_has_no_of_episodes_as_count_of_parts()")
