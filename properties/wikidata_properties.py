@@ -4,32 +4,21 @@
     Wikidata property ID, and a human-readable name.
 
     This module also exports some commonly used properties as constants.
-
-    todo(havanagrawal): Support autogeneration of constants in this file
 """
+import re
+from dataclasses import dataclass
 
+@dataclass(frozen=True)
 class WikidataProperty:
-    def __init__(self, pid: str, name: str = None):
-        if not pid.startswith('P'):
-            raise ValueError('Properties must begin with a P')
-        try:
-            int(pid[1:])
-        except ValueError:
-            raise ValueError('Properties must be of the format P####')
+    pid: str
+    name: str = None
 
-        self._pid = pid
-        self._name = name
-
-    @property
-    def pid(self):
-        return self._pid
-
-    @property
-    def name(self):
-        return self._name
+    def __post_init__(self):
+        if not re.match(r"P\d{1,9}", self.pid):
+            raise ValueError(f"Properties must be of the format P####, was '{self.pid}'")
 
     def __str__(self):
-        return f'{self._pid} ({self.name})'
+        return f'{self.pid} ({self.name})'
 
     def __repr__(self):
         return self.__str__()
