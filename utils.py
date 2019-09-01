@@ -99,7 +99,7 @@ def no_of_episodes(imdb_id):
         x.get_text().strip() for x in soup.select("span.bp_sub_heading")
     )
 
-    pattern = "(\d+)\s+episodes"
+    pattern = r"(\d+)\s+episodes"
 
     matches = (re.match(pattern, no_of_epis) for no_of_epis in maybe_episode_counts)
     matches = list(filter(None, matches))
