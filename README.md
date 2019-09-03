@@ -84,57 +84,57 @@ pip3 install -r requirements.txt
 ### Sample Commands
 
 1. Checking individual items for constraint failures:
-```bash
-# Q65604139 = Season 1 of "Dark"
-# Q65640227 Q65640226 Q65640224 = Episodes of "Dark"
-python3 check_constraints.py Q65640227 Q65640226 Q65640224 Q65604139
-```
-2. Checking the episodes of a series (Jessica Jones) for constraint failures:
-```bash
-# Q18605540 = Jessica Jones
-python3 check_tv_show.py Q18605540 \
-    --child_type=episode
-```
-3. Checking and fixing the seasons of a series for constraint failures
-```bash
-# Q18605540 = Jessica Jones
-python3 check_tv_show.py Q18605540 \
-    --child_type=season \
-    --autofix
-```
-4. Checking and fixing the episodes of a series for constraint failures, but wait until all the failures have been reported before fixing all of them at the end.
-```bash
-# Q18605540 = Jessica Jones
-python3 check_tv_show.py Q18605540 \
-    --child_type=episode \
-    --autofix \
-    --accumulate
-```
-5. Fixing only the titles of episodes of a series
-```bash
-# Q18605540 = Jessica Jones
-python3 check_tv_show.py Q18605540 \
-    --child_type=episode \
-    --autofix \
-    --accumulate \
-    --filter title
-```
-An equivalent command is
-```bash
-# Q18605540 = Jessica Jones
-python3 check_tv_show.py Q18605540 \
-    --child_type=episode \
-    --autofix \
-    --accumulate \
-    --filter P1476
-```
+    ```bash
+    # Q65604139 = Season 1 of "Dark"
+    # Q65640227 Q65640226 Q65640224 = Episodes of "Dark"
+    python3 check_constraints.py Q65640227 Q65640226 Q65640224 Q65604139
+    ```
+1. Checking the episodes of a series (Jessica Jones) for constraint failures:
+    ```bash
+    # Q18605540 = Jessica Jones
+    python3 check_tv_show.py Q18605540 \
+        --child_type=episode
+    ```
+1. Checking and fixing the seasons of a series for constraint failures
+    ```bash
+    # Q18605540 = Jessica Jones
+    python3 check_tv_show.py Q18605540 \
+        --child_type=season \
+        --autofix
+    ```
+1. Checking and fixing the episodes of a series for constraint failures, but wait until all the failures have been reported before fixing all of them at the end.
+    ```bash
+    # Q18605540 = Jessica Jones
+    python3 check_tv_show.py Q18605540 \
+        --child_type=episode \
+        --autofix \
+        --accumulate
+    ```
+1. Fixing only the titles of episodes of a series
+    ```bash
+    # Q18605540 = Jessica Jones
+    python3 check_tv_show.py Q18605540 \
+        --child_type=episode \
+        --autofix \
+        --accumulate \
+        --filter title
+    ```
+    An equivalent command is
+    ```bash
+    # Q18605540 = Jessica Jones
+    python3 check_tv_show.py Q18605540 \
+        --child_type=episode \
+        --autofix \
+        --accumulate \
+        --filter P1476
+    ```
 
 ### Canned Scripts
 
 A few fixes are fairly straightforward, and should not require supervision. The [`canned`](./canned) folder exposes these fixes in the form of scripts that can be run directly without any arguments. If you want to see what changes will be made, run the script with the `--dry` flag.
 
 Example:
-```
+```bash
 # Dry run mode, won't update labels
 python3 -m canned.fix_missing_labels --dry
 
@@ -154,3 +154,5 @@ python3 -m canned.fix_missing_labels
 | [season_has_parts](./constraints/tv.py#L26) | Check if a season has its episodes listed as its parts | Yes | A season with 10 episodes (S1 E1 to S1 E10) must have all 10 episodes in its 'has part' property | P527 (has part) |
 | [has_title](./constraints/tv.py#L48) | Check if an episode/season has its 'title' (P1476) set | Yes | An episode whose title is "Beginnings" must have the property set to this value | P1476 (title) |
 | [has_english_label](./constraints/tv.py#L84) | Check if an episode/season has its 'label' set | Yes | An episode whose title is "Beginnings" must have the label set to this value | label |
+| [episode_has_english_description]() | Check if an episode has its 'description' set | Yes | The third episode from "Dark"'s second season has a description like _episode of Dark (S2 E3)_ | description |
+| [series_has_no_of_episodes]() | Check if a series has the total number of episodes set | Yes :construction: | A series with 84 episodes should have _84_ set for _number of episodes_ | P1113 (number of episodes) |
