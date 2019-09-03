@@ -1,5 +1,9 @@
 # The Wikidata Toolkit
 
+![Python version](https://img.shields.io/badge/python-3.7+-blue.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Python project with WikiBot implementations to fix consistency issues on Wikidata.
+
 ## Table of Contents
 
 1. [Introduction](#introduction)
