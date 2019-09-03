@@ -11,7 +11,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class WikidataProperty:
     pid: str
-    name: str = None
+    name: str
 
     def __post_init__(self):
         if not re.match(r"P\d{1,9}", self.pid):
@@ -49,6 +49,7 @@ TV_COM_ID = WikidataProperty('P2638', 'TV.com ID')
 TELEVISION_SERIES_EPISODE = 'Q21191270'
 TELEVISION_SERIES_SEASON = 'Q3464665'
 TELEVISION_SERIES = 'Q5398426'
+ANIMATED_SERIES = 'Q581714'
 MINISERIES = 'Q1259759'
 BOOK = 'Q571'
 FILM = 'Q11424'

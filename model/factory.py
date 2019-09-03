@@ -3,9 +3,13 @@
 from pywikibot import ItemPage, Site
 
 import model.api as api
-from properties.wikidata_properties import (INSTANCE_OF, TELEVISION_SERIES,
-                                            TELEVISION_SERIES_EPISODE,
-                                            TELEVISION_SERIES_SEASON)
+from properties.wikidata_properties import (
+    INSTANCE_OF,
+    TELEVISION_SERIES,
+    TELEVISION_SERIES_EPISODE,
+    TELEVISION_SERIES_SEASON,
+    ANIMATED_SERIES,
+)
 
 from .television import Episode, Season, Series
 
@@ -30,7 +34,7 @@ class Factory:
             return Episode(item_page, self.repo)
         if TELEVISION_SERIES_SEASON in instance_ids:
             return Season(item_page, self.repo)
-        if TELEVISION_SERIES in instance_ids:
+        if TELEVISION_SERIES in instance_ids or ANIMATED_SERIES in instance_ids:
             return Series(item_page, self.repo)
 
         raise ValueError(f"Unsupported item with instance QIDs {instance_ids}")
