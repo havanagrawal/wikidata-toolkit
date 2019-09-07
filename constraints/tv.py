@@ -12,6 +12,12 @@ from utils import imdb_title, tv_com_title, no_of_episodes
 
 
 def season_has_no_of_episodes_as_count_of_parts() -> api.Constraint:
+    """Check if a season has its 'no of episodes' (P1113) set to the number of parts
+
+        Eg: If a season (S1) has 8 values in its 'has part' field,
+        it should have 8 as its 'no of episodes' field
+    """
+
     def check(item: model.television.Season) -> bool:
         return (
             wp.HAS_PART.pid in item.claims
@@ -24,6 +30,11 @@ def season_has_no_of_episodes_as_count_of_parts() -> api.Constraint:
 
 
 def season_has_parts() -> api.Constraint:
+    """Check if a season has its episodes listed as its parts
+
+        Eg: A season with 10 episodes (S1 E1 to S1 E10) must have all 10 episodes in its 'has part' property
+    """
+
     def check(item: model.television.Season) -> bool:
         return wp.HAS_PART.pid in item.claims
 
