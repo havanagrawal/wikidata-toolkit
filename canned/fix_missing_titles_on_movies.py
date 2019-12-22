@@ -1,4 +1,7 @@
-"""Add an English title on movies which have an English label"""
+"""Add an English title on movies which have an English label
+
+    Sets the title to the same value as the label
+"""
 import click
 from pywikibot import Site, ItemPage, WbMonolingualText, Claim
 

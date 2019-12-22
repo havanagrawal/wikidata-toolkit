@@ -98,12 +98,17 @@ def movies_with_missing_titles():
     """
     query = f"""
     SELECT ?movie ?movieLabel WHERE {{
-      ?movie wdt:{wp.INSTANCE_OF.pid} wd:Q11424;
+      ?movie wdt:{wp.INSTANCE_OF.pid} wd:{wp.FILM};
         wdt:{wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW.pid} wd:{wp.ENGLISH}.
       OPTIONAL {{ ?movie wdt:{wp.TITLE.pid} ?title. }}
-      OPTIONAL {{ ?movie wdt:P345  ?imdbId. }}
+      OPTIONAL {{ ?movie wdt:{wp.IMDB_ID.pid}  ?imdbId. }}
+
+      # Does not have a title bound
       FILTER(!(BOUND(?title)))
+
+      # Has an IMDb identifier
       FILTER((BOUND(?imdbId)))
+
       # Skip "http://www.wikidata.org/entity/" (31 characters)
       FILTER(!(REGEX(?movieLabel, SUBSTR(STR(?movie), 32 ))))
       SERVICE wikibase:label {{

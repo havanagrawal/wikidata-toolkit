@@ -2,6 +2,7 @@
 import click
 from pywikibot import Site, ItemPage
 from pywikibot.data.api import APIError
+from pywikibot.exceptions import OtherPageSaveError
 
 from sparql.queries import items_with_missing_labels_with_title
 
@@ -34,7 +35,7 @@ def main(dry=False):
         item.get()
         try:
             item.editLabels({"en": title})
-        except APIError as e:
+        except (APIError, OtherPageSaveError) as e:
             print(f"An error occurred while adding label for {item_id}: {e}")
 
 
