@@ -415,8 +415,6 @@ class Season(TvBase, api.Heirarchical, api.Chainable):
                     wp.PRODUCTION_COMPANY,
                     wp.HAS_PART,
                     wp.NUMBER_OF_EPISODES,
-                    wp.FOLLOWS,
-                    wp.FOLLOWED_BY,
                 )
             ]
             + [
@@ -429,6 +427,10 @@ class Season(TvBase, api.Heirarchical, api.Chainable):
                     wp.COUNTRY_OF_ORIGIN,
                     wp.ORIGNAL_LANGUAGE_OF_FILM_OR_TV_SHOW,
                 )
+            ]
+            + [
+                gc.follows_something(),
+                gc.is_followed_by_something(),
             ]
         )
 
