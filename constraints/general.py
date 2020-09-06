@@ -60,6 +60,13 @@ def follows_something() -> Constraint:
     """Alias for has_property(wp.FOLLOWS), but with an autofix"""
 
     def check(item: model.api.Chainable) -> bool:
+        # Returning true if this property exists anywhere as a qualifier
+        # is very loose, and will possibly pass this check liberally.
+        # This is acceptable considering the alternative, which is duplicating information
+        # on the item in multiple places
+        # See https://www.wikidata.org/wiki/Wikidata:Requests_for_permissions/Bot/TheFireBenderBot
+        if _has_property_as_qualifier(item, wp.FOLLOWS):
+            return True
         return wp.FOLLOWS.pid in item.claims
 
     def fix(item: model.api.Chainable) -> Iterable[Fix]:
@@ -81,6 +88,13 @@ def is_followed_by_something() -> Constraint:
     """Alias for has_property(wp.FOLLOWED_BY), but with an autofix"""
 
     def check(item: model.api.Chainable) -> bool:
+        # Returning true if this property exists anywhere as a qualifier
+        # is very loose, and will possibly pass this check liberally.
+        # This is acceptable considering the alternative, which is duplicating information
+        # on the item in multiple places
+        # See https://www.wikidata.org/wiki/Wikidata:Requests_for_permissions/Bot/TheFireBenderBot
+        if _has_property_as_qualifier(item, wp.FOLLOWED_BY):
+            return True
         return wp.FOLLOWED_BY.pid in item.claims
 
     def fix(item: model.api.Chainable) -> Iterable[Fix]:
@@ -96,3 +110,12 @@ def is_followed_by_something() -> Constraint:
         return [ClaimFix(new_claim, summary, item.itempage)]
 
     return Constraint(check, fixer=fix, name=f"is_followed_by_something()")
+
+
+def _has_property_as_qualifier(item, prop: wp.WikidataProperty):
+    for _, claims in item.claims.items():
+        for claim in claims:
+            if prop.pid in claim.qualifiers:
+                print(f"[DEBUG] {item} has {prop} in {claim.id}'s qualifier")
+                return True
+    return False
