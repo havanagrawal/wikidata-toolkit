@@ -19,7 +19,7 @@ def _clone(src: str, dest: str, props: Iterable[wp.WikidataProperty]):
     dest_item = ItemPage(repoutil.repo, dest)
 
     success, failures = repoutil.copy(src_item, dest_item, props)
-    print(success, failures)
+    print(f"Success: {success}, Failures: {failures}")
 
 
 @click.group()
