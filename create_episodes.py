@@ -15,6 +15,14 @@ def read_titles(filepath):
         return [s for s in reader]
 
 
+def create_episode_quickstatements(series_id, season_id, title, ordinal):
+    print("CREATE")
+    print(f'LAST|Len|"{title}"')
+    print(f"LAST|{wp.INSTANCE_OF.pid}|{wp.TELEVISION_SERIES_EPISODE}")
+    print(f"LAST|{wp.PART_OF_THE_SERIES.pid}|{series_id}")
+    print(f'LAST|{wp.SEASON.pid}|{season_id}|{wp.SERIES_ORDINAL.pid}|"{ordinal}"')
+
+
 def create_episode(series_id, season_id, title, ordinal):
     repoutil = RepoUtils(Site().data_repository())
     episode = ItemPage(repoutil.repo)
@@ -44,11 +52,14 @@ def create_episode(series_id, season_id, title, ordinal):
 @click.argument("series_id", callback=validate_item_id)
 @click.argument("season_id", callback=validate_item_id)
 @click.argument("titles_file", type=click.Path(exists=True))
-def create_episodes(series_id, season_id, titles_file):
+@click.option("--quickstatements", is_flag=True, default=False)
+def create_episodes(series_id, season_id, titles_file, quickstatements=False):
     titles = read_titles(titles_file)
     for ordinal, title in titles:
-        print(title)
-        create_episode(series_id, season_id, title, ordinal)
+        if quickstatements:
+            create_episode_quickstatements(series_id, season_id, title, ordinal)
+        else:
+            create_episode(series_id, season_id, title, ordinal)
 
 
 if __name__ == "__main__":
