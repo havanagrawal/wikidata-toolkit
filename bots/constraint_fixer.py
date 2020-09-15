@@ -49,7 +49,7 @@ class ConstraintCheckerBot(WikidataBot):
             unused_page is always None since use_from_page is False.
             See https://doc.wikimedia.org/pywikibot/master/api_ref/pywikibot.html#pywikibot.WikidataBot
         """
-        item.get()
+        item.get(force=True)
         typed_item = self.factory.get_typed_item(item.title())
         botlogging.output(f"Checking constraints for {typed_item}", toStdout=True)
         satisfied = []
@@ -87,7 +87,7 @@ class ConstraintFixerBot(ConstraintCheckerBot):
             unused_page is always None since use_from_page is False.
             See https://doc.wikimedia.org/pywikibot/master/api_ref/pywikibot.html#pywikibot.WikidataBot
         """
-        item.get()
+        item.get(force=True)
         _, not_satisfied = super().treat_page_and_item(unused_page, item)
         typed_item = self.factory.get_typed_item(item.title())
 
@@ -125,7 +125,7 @@ class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
             unused_page is always None since use_from_page is False.
             See https://doc.wikimedia.org/pywikibot/master/api_ref/pywikibot.html#pywikibot.WikidataBot
         """
-        item.get()
+        item.get(force=True)
         _, not_satisfied = super().treat_page_and_item(unused_page, item)
         typed_item = self.factory.get_typed_item(item.title())
 
