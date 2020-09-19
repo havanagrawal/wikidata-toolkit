@@ -59,7 +59,8 @@ def create_episodes(series_id, season_id, titles_file, quickstatements=False):
         if quickstatements:
             create_episode_quickstatements(series_id, season_id, title, ordinal)
         else:
-            create_episode(series_id, season_id, title, ordinal)
+            raise ValueError("Non-quickstatements creation not permitted. Please use the --quickstatements option")
+            # create_episode(series_id, season_id, title, ordinal)
 
 
 if __name__ == "__main__":
