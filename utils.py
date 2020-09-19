@@ -175,3 +175,6 @@ class RepoUtils:
                 )
                 successes += 1
         return (successes, failures)
+
+    def new_claim(self, prop):
+        return Claim(self.repo, prop)
