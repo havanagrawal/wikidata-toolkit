@@ -24,24 +24,26 @@ def create_episode_quickstatements(series_id, season_id, title, ordinal):
 
 
 def create_episode(series_id, season_id, title, ordinal):
+    print(f"Creating episode for {title}...")
     repoutil = RepoUtils(Site().data_repository())
     episode = ItemPage(repoutil.repo)
+
+    episode.editLabels({"en": title}, summary="Setting label")
     print(f"Created a new Item: {episode.getID()}")
-    episode.editLabels({"en": title})
 
     print(f'Setting {wp.INSTANCE_OF.pid}')
     instance_claim = repoutil.new_claim(wp.INSTANCE_OF.pid)
-    instance_claim.setTarget(wp.TELEVISION_SERIES_EPISODE)
+    instance_claim.setTarget(ItemPage(repoutil.repo, wp.TELEVISION_SERIES_EPISODE))
     episode.addClaim(instance_claim, summary=f'Setting {wp.INSTANCE_OF.pid}')
 
     print(f'Setting {wp.PART_OF_THE_SERIES.pid}')
     series_claim = repoutil.new_claim(wp.PART_OF_THE_SERIES.pid)
-    series_claim.setTarget(series_id)
+    series_claim.setTarget(ItemPage(repoutil.repo, series_id))
     episode.addClaim(series_claim, summary=f'Setting {wp.PART_OF_THE_SERIES.pid}')
 
     print(f'Setting {wp.SEASON.pid}')
     season_claim = repoutil.new_claim(wp.SEASON.pid)
-    season_claim.setTarget(season_id)
+    season_claim.setTarget(ItemPage(repoutil.repo, season_id))
     season_ordinal = repoutil.new_claim(wp.SERIES_ORDINAL.pid)
     season_ordinal.setTarget(ordinal)
     season_claim.addQualifier(season_ordinal)
@@ -59,11 +61,11 @@ def create_episodes(series_id, season_id, titles_file, quickstatements=False):
         if quickstatements:
             create_episode_quickstatements(series_id, season_id, title, ordinal)
         else:
-            raise ValueError("Non-quickstatements creation not permitted. Please use the --quickstatements option")
-            # create_episode(series_id, season_id, title, ordinal)
+            create_episode(series_id, season_id, title, ordinal)
 
 
 if __name__ == "__main__":
+    Site().login()
     # pylint: disable=no-value-for-parameter
     create_episodes()
 
