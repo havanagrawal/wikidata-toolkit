@@ -1,10 +1,10 @@
 import csv
 
 import click
+import commands
 from pywikibot import Site
 
-from click_utils import validate_item_id
-import commands
+from .click_utils import validate_item_id
 
 
 @click.command()
