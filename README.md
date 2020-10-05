@@ -135,12 +135,18 @@ pip3 install -r requirements.txt
     # This will write out two files
     # the-neighborhood-tv-series_S01.csv and
     # the-neighborhood-tv-series_S02.csv
-    python3 list_episodes.py "https://en.wikipedia.org/wiki/The_Neighborhood_(TV_series)" --episode-counts=21,22
+    python3 -m cli.list_episodes "https://en.wikipedia.org/wiki/The_Neighborhood_(TV_series)" --episode-counts=21,22
+    ```
+
+1. Create seasons in Wikidata
+    ```bash
+    # Create two seasons for Q7753382 (The Neighborhood)
+    python3 -m cli.create_seasons Q7753382 2
     ```
 
 1. Create the episodes in Wikidata:
     ```bash
-    python3 create_episodes.py Q7753382 Q99419240 the-neighborhood-tv-series_S01.csv --quickstatements
+    python3 -m cli.create_episodes Q7753382 Q99419240 the-neighborhood-tv-series_S01.csv --quickstatements
     ```
 
 ### Canned Scripts
