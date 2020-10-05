@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 import click
 import re
 import requests
@@ -86,6 +86,20 @@ def tv_com_title(tv_com_id):
     heading = soup.select_one(".ep_title")
     if heading is not None:
         return heading.get_text().strip()
+    return None
+
+
+def bgg_title(bgg_id) -> Optional[str]:
+    if bgg_id is None:
+        return None
+
+    response = requests.get(f"https://www.boardgamegeek.com/boardgame/{bgg_id}")
+    soup = BeautifulSoup(response.content, features="lxml")
+    heading = soup.find("title")
+    if heading is not None:
+        # the title for BGG is in the format "<title | Board Game | BoardGameGeek"
+        heading = heading.get_text().split("|")[0]
+        return heading.strip()
     return None
 
 

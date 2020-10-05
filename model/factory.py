@@ -9,10 +9,11 @@ from properties.wikidata_properties import (
     TELEVISION_SERIES_EPISODE,
     TELEVISION_SERIES_SEASON,
     ANIMATED_SERIES,
+    BOARD_GAME
 )
 
 from .television import Episode, Season, Series
-
+from .board_game import BoardGame
 
 class Factory:
     """Factory for creating instances of the wrapper classes exposed by model"""
@@ -36,5 +37,7 @@ class Factory:
             return Season(item_page, self.repo)
         if TELEVISION_SERIES in instance_ids or ANIMATED_SERIES in instance_ids:
             return Series(item_page, self.repo)
+        if BOARD_GAME in instance_ids:
+            return BoardGame(item_page, self.repo)
 
         raise ValueError(f"Unsupported item with instance QIDs {instance_ids}")
