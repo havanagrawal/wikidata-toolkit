@@ -153,6 +153,7 @@ python3 -m canned.fix_missing_labels --dry
 
 # Run after confirming that the changes look correct
 python3 -m canned.fix_missing_labels
+```
 
 ### Contributing
 
