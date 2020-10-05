@@ -1,3 +1,8 @@
+import requests
+import re
+from bs4 import BeautifulSoup
+
+
 def imdb_id(title):
     """IMDB identifier
 
@@ -61,7 +66,19 @@ def board_game_geek_id(title):
     >>> board_game_geek_id("Bunny Kingdom")
     184921
     """
-    pass
+    res = requests.get('https://boardgamegeek.com/geeksearch.php?action=search&objecttype=boardgame&q={}'.format(title))
+    if res.status_code != 200:
+        return ""
+    else:
+        web_text = res.content
+        soup = BeautifulSoup(web_text, "html.parser")
+        td_details = soup.find('table',{'id':'collectionitems'})
+        matching_url = td_details.find_all('a',attrs={'href': re.compile("^/boardgame")})[0]['href']
+        matches = re.findall('[0-9]+', matching_url)
+        if len(matches) > 0:
+            return int(matches[0])
+        else:
+            return ""
 
 if __name__ == "__main__":
     import doctest
