@@ -24,8 +24,8 @@ def print_episode_list(episodes, episode_counts, title, skip_titles):
         season_str = f"{season + 1}".rjust(2, "0")
         with open(f"{title}_S{season_str}.csv", 'w') as f:
             for i, e in enumerate(episodes[j:j+ep_count]):
-                print(f"{i + 1},{e}", file=f)
-            j += ep_count
+                print(f"{j + 1},{i + 1},{e}", file=f)
+                j += 1
 
 @click.command()
 @click.argument("url")
