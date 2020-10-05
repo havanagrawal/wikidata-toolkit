@@ -12,6 +12,7 @@ A Python project with WikiBot implementations to fix consistency issues on Wikid
     1. [Pre-Requisites](#pre-requisites)
     1. [Sample Commands](#sample-commands)
     1. [Canned Scripts](#canned-scripts)
+1. [Tests]
 1. [Contributing](#contributing)
 
 ## Introduction
@@ -153,6 +154,22 @@ python3 -m canned.fix_missing_labels --dry
 
 # Run after confirming that the changes look correct
 python3 -m canned.fix_missing_labels
+```
+
+### Tests
+
+Run `pytest` at the root of the repository. You should see something similar to:
+
+```
+================================== test session starts ==================================
+platform darwin -- Python 3.7.6, pytest-6.1.1, py-1.9.0, pluggy-0.13.1
+rootdir: /Users/havan/Dropbox/CP/Git/wikidata-toolkit
+plugins: mock-3.3.1
+collected 4 items
+
+cli/test_cli.py ....                                                              [100%]
+
+=================================== 4 passed in 3.40s ===================================
 ```
 
 ### Contributing
