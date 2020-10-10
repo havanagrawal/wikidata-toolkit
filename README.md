@@ -7,27 +7,19 @@ A Python project with WikiBot implementations to fix consistency issues on Wikid
 ## Table of Contents
 
 1. [Introduction](#introduction)
-1. [Why Television Series?](#why-television-series)
 1. [Design](#design)
 1. [Usage](#usage)
     1. [Pre-Requisites](#pre-requisites)
     1. [Sample Commands](#sample-commands)
     1. [Canned Scripts](#canned-scripts)
-1. [Constraints](#constraints)
+1. [Tests]
+1. [Contributing](#contributing)
 
 ## Introduction
 
 This repo contains a few utility scripts that fix consistency issues and missing data on [Wikidata](https://www.wikidata.org), focusing on TV series.
 
 It is used by my Wikidata bot a.k.a. [TheFireBenderBot](https://www.wikidata.org/wiki/User:TheFireBenderBot). Check out its [contributions](https://www.wikidata.org/wiki/Special:Contributions/TheFireBenderBot) to get an idea of what it specializes at. Here are some [stats](https://xtools.wmflabs.org/ec/www.wikidata.org/TheFireBenderBot).
-
-## Why Television Series?
-
-As part of working with the OMDB API, I discovered gaps in the results such as missing episodes. [Some replies](https://github.com/omdbapi/OMDb-API/issues/88#issuecomment-413684586) on the issues revealed that they use Wikidata as a backend, which led me to explore Wikidata itself.
-
-In the future, this repo may evolve to encompass more cultural genres such as movies and books.
-
-In general, Wikidata is an incredibly useful open-source data source, and any contribution to the service can have a large, positive impact on all downstream users, including academic projects and research.
 
 ## Design
 
@@ -87,6 +79,8 @@ pip3 install -r requirements.txt
 
 ### Sample Commands
 
+#### Checking and Fixing Constraints
+
 1. Checking individual items for constraint failures:
     ```bash
     # Q65604139 = Season 1 of "Dark"
@@ -133,6 +127,28 @@ pip3 install -r requirements.txt
         --filter P1476
     ```
 
+
+#### Fetching/Updating Data from Wikipedia
+
+1. Get the list of episodes for The Neighborhood:
+    ```bash
+    # This will write out two files
+    # the-neighborhood-tv-series_S01.csv and
+    # the-neighborhood-tv-series_S02.csv
+    python3 -m cli.list_episodes "https://en.wikipedia.org/wiki/The_Neighborhood_(TV_series)" --episode-counts=21,22
+    ```
+
+1. Create seasons in Wikidata
+    ```bash
+    # Create two seasons for Q7753382 (The Neighborhood)
+    python3 -m cli.create_seasons Q7753382 2
+    ```
+
+1. Create the episodes in Wikidata:
+    ```bash
+    python3 -m cli.create_episodes Q7753382 Q99419240 the-neighborhood-tv-series_S01.csv --quickstatements
+    ```
+
 ### Canned Scripts
 
 A few fixes are fairly straightforward, and should not require supervision. The [`canned`](./canned) folder exposes these fixes in the form of scripts that can be run directly without any arguments. If you want to see what changes will be made, run the script with the `--dry` flag.
@@ -146,17 +162,31 @@ python3 -m canned.fix_missing_labels --dry
 python3 -m canned.fix_missing_labels
 ```
 
-## Constraints
+### Tests
 
-| Constraint Name | Description | Supports Autofix | Example | Relevant Properties |
-|-----------------|-------------|------------------|---------|----|
-| [has_property](./constraints/general.py#L13)    | Check if an item has a certain property | No | An episode should have the property 'title' (P1476) | |
-| [inherits_property](./constraints/general.py#L22) | Check if an item inherits a certain property from its parent | Yes | An episode should have the same value for 'country of origin' (P495) as its season | |
-| [follows_something](./constraints/general.py#L59) | Check if an item follows another item | Yes | An episode (S1 E9) must follow the episode (S1 E8) | P155 (follows) |
-| [is_followed_by_something](./constraints/general.py#L80) | Check if an item is followed by another item | Yes | An episode (S1 E8) must be followed by the episode (S1 E9) | P156 (followed by) |
-| [season_has_no_of_episodes_as_count_of_parts](./constraints/tv.py#L14) | Check if a season has its 'no of episodes' (P1113) set to the number of parts | No | If a season (S1) has 8 values in its 'has part' field, it should have 8 as its 'no of episodes' field | P527 (has part), P1113 (no of episodes) |
-| [season_has_parts](./constraints/tv.py#L32) | Check if a season has its episodes listed as its parts | Yes | A season with 10 episodes (S1 E1 to S1 E10) must have all 10 episodes in its 'has part' property | P527 (has part) |
-| [has_title](./constraints/tv.py#L59) | Check if an episode/season has its 'title' (P1476) set | Yes | An episode whose title is "Beginnings" must have the property set to this value | P1476 (title) |
-| [has_english_label](./constraints/tv.py#L95) | Check if an episode/season has its 'label' set | Yes | An episode whose title is "Beginnings" must have the label set to this value | label |
-| [episode_has_english_description](./constraints/tv.py#L122) | Check if an episode has its 'description' set | Yes | The third episode from "Dark"'s second season has a description like _episode of Dark (S2 E3)_ | description |
-| [series_has_no_of_episodes](./constraints/tv.py#L158) | Check if a series has the total number of episodes set | Yes :construction: | A series with 84 episodes should have _84_ set for _number of episodes_ | P1113 (number of episodes) |
+Run `pytest` at the root of the repository. You should see something similar to:
+
+```
+================================== test session starts ==================================
+platform darwin -- Python 3.7.6, pytest-6.1.1, py-1.9.0, pluggy-0.13.1
+rootdir: /foo/bar/baz/wikidata-toolkit
+plugins: mock-3.3.1
+collected 4 items
+
+cli/test_cli.py ....                                                              [100%]
+
+=================================== 4 passed in 3.40s ===================================
+```
+
+### Contributing
+
+#### Hacktoberfest
+
+Hello there! If you are a Hacktoberfest 🎃 participant and wish to contribute to this repository, you can
+1. Pick [an issue with the `hacktoberfest` label](https://github.com/havanagrawal/wikidata-toolkit/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest)
+2. Fork this repository
+3. Clone this repository to your local machine
+4. **Create a new branch**
+5. Work on the issue on this new branch
+6. Push your branch to your fork
+7. Send a PR!

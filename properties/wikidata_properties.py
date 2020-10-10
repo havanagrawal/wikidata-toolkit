@@ -40,10 +40,14 @@ FOLLOWS = WikidataProperty('P155', 'follows')
 FOLLOWED_BY = WikidataProperty('P156', 'followed by')
 SERIES_ORDINAL = WikidataProperty('P1545', 'series ordinal')
 LANGUAGE_OF_WORK_OR_NAME = WikidataProperty('P407', 'language of work or name')
+MINIMUM_NUMBER_OF_PLAYERS = WikidataProperty('P1872', 'minimum number of players')
+MAXIMUM_NUMBER_OF_PLAYERS = WikidataProperty('P1873', 'maximum number of players')
+
 
 # Identifiers
 IMDB_ID = WikidataProperty('P345', 'IMDb ID')
 TV_COM_ID = WikidataProperty('P2638', 'TV.com ID')
+BOARD_GAME_GEEK_ID = WikidataProperty('P2339', 'BGG ID')
 
 # 'instance of' values
 TELEVISION_SERIES_EPISODE = 'Q21191270'
@@ -57,6 +61,7 @@ SILENT_FILM = 'Q226730'
 LITERARY_WORK = 'Q7725634'
 WRITTEN_WORK = 'Q47461344'
 PERIODICAL = 'Q1002697'
+BOARD_GAME = 'Q131436'
 
 # Languages
 ENGLISH = 'Q1860'

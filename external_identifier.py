@@ -48,7 +48,7 @@ def fandom_wiki_id(title):
 
 
 def the_tvdb_dot_com_id(title):
-    """TVDB.com identifier
+    """thetvdb.com identifier
 
     >>> the_tvdb_dot_com_id("Inception")
     "movies/inception"
@@ -69,3 +69,7 @@ def board_game_geek_id(title):
     184921
     """
     pass
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

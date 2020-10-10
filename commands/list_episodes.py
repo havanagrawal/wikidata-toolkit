@@ -1,4 +1,3 @@
-import click
 import requests
 from bs4 import BeautifulSoup
 
@@ -24,15 +23,11 @@ def print_episode_list(episodes, episode_counts, title, skip_titles):
         season_str = f"{season + 1}".rjust(2, "0")
         with open(f"{title}_S{season_str}.csv", 'w') as f:
             for i, e in enumerate(episodes[j:j+ep_count]):
-                print(f"{i + 1},{e}", file=f)
-            j += ep_count
+                print(f"{j + 1},{i + 1},{e}", file=f)
+                j += 1
 
-@click.command()
-@click.argument("url")
-@click.option("--episode-counts", help="A comma-separated list of values representing the number of episodes in each season", default="")
-@click.option("--title", help="A title to use as a prefix for the CSV files", default=None)
-@click.option("--skip-titles", help="A list of titles to skip (not counted in episode numbers", default=None)
-def episode_list(url, episode_counts, title, skip_titles):
+
+def list_episodes(url, episode_counts, title, skip_titles):
     if title is None:
         title = slugify(url.replace("https://en.wikipedia.org/wiki/", ""))
     skip_titles = set(skip_titles.split(",")) if skip_titles else set()
@@ -41,8 +36,3 @@ def episode_list(url, episode_counts, title, skip_titles):
 
 def slugify(s):
     return s.replace("(", "").replace(")", "").lower().replace("_", "-")
-
-
-if __name__ == "__main__":
-    # pylint: disable=no-value-for-parameter
-    episode_list()
