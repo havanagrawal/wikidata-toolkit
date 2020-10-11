@@ -5,13 +5,16 @@ from bs4 import BeautifulSoup
 
 def imdb_id(title):
     """IMDB identifier
-
     >>> imdb_id("Inception")
-    "tt1375666"
+    'tt1375666'
     >>> imdb_id("Interstellar")
-    "tt0816692"
+    'tt0816692'
     """
-    pass
+    web_text = requests.get(f"https://www.imdb.com/find?q={title}").text
+    soup = BeautifulSoup(web_text, "html.parser")
+    candidates = soup.find("table", attrs={"class": "findList"})
+    identifier = candidates.find("a", href=True)["href"]
+    return identifier.rstrip("/").split("/")[-1]
 
 
 def tv_tropes_id(title):
