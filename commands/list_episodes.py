@@ -9,9 +9,10 @@ def get_episode_list(url):
     return episode_names
 
 
-def print_episode_list(episodes, episode_counts, title, skip_titles):
+def print_episode_list(episodes, episode_counts, title, skip_titles, skip_first_n=0):
     episodes = [e for e in episodes if e not in skip_titles]
-    print(f"Skipped {len(skip_titles)} titles")
+    episodes = episodes[skip_first_n:]
+    print(f"Skipped {len(skip_titles) + skip_first_n} titles")
     if not episode_counts:
         episode_counts = [len(episodes)]
     else:
@@ -27,11 +28,11 @@ def print_episode_list(episodes, episode_counts, title, skip_titles):
                 j += 1
 
 
-def list_episodes(url, episode_counts, title, skip_titles):
+def list_episodes(url, episode_counts, title, skip_titles, skip_first_n=0):
     if title is None:
         title = slugify(url.replace("https://en.wikipedia.org/wiki/", ""))
     skip_titles = set(skip_titles.split(",")) if skip_titles else set()
-    print_episode_list(get_episode_list(url), episode_counts, title, skip_titles)
+    print_episode_list(get_episode_list(url), episode_counts, title, skip_titles, skip_first_n)
 
 
 def slugify(s):
