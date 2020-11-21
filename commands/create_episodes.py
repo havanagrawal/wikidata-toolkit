@@ -24,6 +24,17 @@ def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, 
     print(f"{dry_str}Creating episode with label='{title}'")
     if not dry:
         repoutil = RepoUtils(Site().data_repository())
+
+        season = ItemPage(repoutil.repo, season_id)
+        season.get()
+
+        # Check if season has part_of_the_series set to series_id
+        if wp.PART_OF_THE_SERIES.pid not in season.claims:
+            raise ValueError(f"The season {season_id} does not have a PART_OF_THE_SERIES ({wp.PART_OF_THE_SERIES.pid} property). Check the input series and season IDs for correctness.")
+        actual_series_id = str(season.claims[wp.PART_OF_THE_SERIES.pid][0].getTarget().getID())
+        if actual_series_id != series_id:
+            raise ValueError(f"The season {season_id} has PART_OF_THE_SERIES={actual_series_id} but expected={series_id}. Check the input series and season IDs for correctness.")
+
         episode = ItemPage(repoutil.repo)
 
         episode.editLabels({"en": title}, summary="Setting label")
