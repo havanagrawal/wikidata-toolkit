@@ -7,7 +7,7 @@ from pywikibot.pagegenerators import WikidataSPARQLPageGenerator
 from bots import getbot
 from sparql.query_builder import generate_sparql_query
 import properties.wikidata_properties as wp
-from click_utils import validate_item_id
+from cli.click_utils import validate_item_id
 
 @click.command()
 @click.argument("tvshow_id", callback=validate_item_id)
@@ -40,7 +40,7 @@ def check_tv_show(tvshow_id=None, child_type="episode", autofix=False, accumulat
         if instance_of_type == wp.TELEVISION_SERIES:
             gen = [ItemPage(Site().data_repository(), tvshow_id)]
         bot = getbot(gen, autofix=autofix, accumulate=accumulate, always=always, property_filter=filter)
-        bot.run()
+        bot.run() 
 
 
 if __name__ == "__main__":
