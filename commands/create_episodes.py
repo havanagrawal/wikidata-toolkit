@@ -20,6 +20,30 @@ def create_episode_quickstatements(series_id, season_id, title, series_ordinal, 
 
 
 def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, dry):
+    """Creates a season item on WikiData
+
+    Arguments
+    ---------
+    series_id: str
+        The Wiki ID of the series ItemPage
+    season_id: str
+        The Wiki ID of the season ItemPage
+    title: str
+        The title of this episode. This is used to set the label.
+    series_ordinal: int
+        The ordinal of this episode, within the series
+    season_ordinal: int
+        The ordinal of this episode, within the season
+    dry: bool
+        Whether or not this function should run in dry-run mode.
+        In dry-run mode, no real changes are made to WikiData, they are only
+        logged to stdout.
+
+    Returns
+    -------
+    episode_id: str
+        The Wiki ID of the episode item
+    """
     dry_str = "[DRY-RUN] " if dry else ""
     print(f"{dry_str}Creating episode with label='{title}'")
     if not dry:
@@ -68,6 +92,8 @@ def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, 
 
         episode.addClaim(season_claim, summary=f"Setting {wp.SEASON.pid}")
 
+    return episode.getID()
+
 
 def create_episodes(series_id, season_id, titles_file, quickstatements=False, dry=False):
     titles = read_titles(titles_file)
@@ -75,4 +101,4 @@ def create_episodes(series_id, season_id, titles_file, quickstatements=False, dr
         if quickstatements:
             create_episode_quickstatements(series_id, season_id, title, series_ordinal, season_ordinal)
         else:
-            create_episode(series_id, season_id, title, series_ordinal, season_ordinal, dry)
+            return create_episode(series_id, season_id, title, series_ordinal, season_ordinal, dry)
