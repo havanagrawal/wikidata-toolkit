@@ -13,15 +13,34 @@ def create_season_quickstatements(series_id, label, descr, ordinal):
     print(f'LAST|{wp.PART_OF_THE_SERIES.pid}|{series_id}|{wp.SERIES_ORDINAL.pid}|"{ordinal}"')
 
 
-def create_season(series_id, label, descr, ordinal, dry):
+def create_season(series_id: str, label: str, descr: str, ordinal: int, dry: bool):
+    """Creates a season item on WikiData
+
+    Arguments
+    ---------
+    series_id: str
+        The Wiki ID of the series ItemPage
+    label: str
+        The label to use for this season.
+        Typically "<Series Name>, season x", where x is the ordinal
+    descr: str
+        The description to use for this season.
+        Typically "season x of <Series Name>" where x is the ordinal
+    ordinal: int
+        The ordinal of this season, within the series
+    dry: bool
+        Whether or not this function should run in dry-run mode.
+        In dry-run mode, no real changes are made to WikiData, they are only
+        logged to stdout.
+    """
     dry_str = "[DRY-RUN] " if dry else ""
     repoutil = RepoUtils(Site().data_repository())
+    season_ids = []
     print(f"{dry_str}Creating season with\n\tlabel='{label}'\n\tdescription='{descr}'")
     if not dry:
-        season = ItemPage(repoutil.repo)
-        season.editLabels({"en": label}, summary="Setting label")
-        season.editDescriptions({"en": descr}, summary="Setting description")
+        season = repoutil.new_item(labels={"en": label}, descriptions={"en": descr})
         print(f"Created a new Item: {season.getID()}")
+        season_ids.append(str(season.getID()))
 
     print(f"{dry_str}Setting {wp.INSTANCE_OF}={wp.TELEVISION_SERIES_SEASON}")
     if not dry:
@@ -39,6 +58,11 @@ def create_season(series_id, label, descr, ordinal, dry):
         series_claim.addQualifier(season_ordinal)
         season.addClaim(series_claim, summary=f"Setting {wp.PART_OF_THE_SERIES.pid}")
 
+    # Easier to pipe through to other scripts
+    print("\n".join(season_ids))
+
+    return season_ids
+
 
 def create_seasons(series_id, number_of_seasons, quickstatements=False, dry=False):
     series_title = ItemPage(Site().data_repository(), series_id)
@@ -50,5 +74,5 @@ def create_seasons(series_id, number_of_seasons, quickstatements=False, dry=Fals
         if quickstatements:
             create_season_quickstatements(series_id, label, descr, i)
         else:
-            create_season(series_id, label, descr, i, dry)
+            return create_season(series_id, label, descr, i, dry)
 
