@@ -1,5 +1,3 @@
-import csv
-
 import click
 import commands
 from pywikibot import Site

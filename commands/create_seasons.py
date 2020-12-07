@@ -32,15 +32,21 @@ def create_season(series_id: str, label: str, descr: str, ordinal: int, dry: boo
         Whether or not this function should run in dry-run mode.
         In dry-run mode, no real changes are made to WikiData, they are only
         logged to stdout.
+
+    Returns
+    -------
+    season_id: str
+        The Wiki ID of the season that was created
     """
     dry_str = "[DRY-RUN] " if dry else ""
     repoutil = RepoUtils(Site().data_repository())
-    season_ids = []
+
+    season = None
+
     print(f"{dry_str}Creating season with\n\tlabel='{label}'\n\tdescription='{descr}'")
     if not dry:
         season = repoutil.new_item(labels={"en": label}, descriptions={"en": descr})
         print(f"Created a new Item: {season.getID()}")
-        season_ids.append(str(season.getID()))
 
     print(f"{dry_str}Setting {wp.INSTANCE_OF}={wp.TELEVISION_SERIES_SEASON}")
     if not dry:
@@ -58,21 +64,25 @@ def create_season(series_id: str, label: str, descr: str, ordinal: int, dry: boo
         series_claim.addQualifier(season_ordinal)
         season.addClaim(series_claim, summary=f"Setting {wp.PART_OF_THE_SERIES.pid}")
 
-    # Easier to pipe through to other scripts
-    print("\n".join(season_ids))
-
-    return season_ids
+    return season.getID() if season is not None else "Q-1"
 
 
 def create_seasons(series_id, number_of_seasons, quickstatements=False, dry=False):
     series_title = ItemPage(Site().data_repository(), series_id)
     series_title.get(force=True)
     series_label = series_title.labels['en']
+    season_ids = []
     for i in range(1, number_of_seasons + 1):
         label = f"{series_label}, season {i}"
         descr = f"season {i} of {series_label}"
         if quickstatements:
             create_season_quickstatements(series_id, label, descr, i)
         else:
-            return create_season(series_id, label, descr, i, dry)
+            season_id = create_season(series_id, label, descr, i, dry)
+            season_ids.append(season_id)
+
+    # Easier to pipe through to other scripts
+    print("\n".join(season_ids))
+
+    return season_ids
 

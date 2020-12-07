@@ -46,6 +46,8 @@ def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, 
     """
     dry_str = "[DRY-RUN] " if dry else ""
     print(f"{dry_str}Creating episode with label='{title}'")
+
+    episode = None
     if not dry:
         repoutil = RepoUtils(Site().data_repository())
 
@@ -92,13 +94,17 @@ def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, 
 
         episode.addClaim(season_claim, summary=f"Setting {wp.SEASON.pid}")
 
-    return episode.getID()
+    return episode.getID() if episode is not None else "Q-1"
 
 
 def create_episodes(series_id, season_id, titles_file, quickstatements=False, dry=False):
     titles = read_titles(titles_file)
+    episode_ids = []
     for series_ordinal, season_ordinal, title in titles:
         if quickstatements:
             create_episode_quickstatements(series_id, season_id, title, series_ordinal, season_ordinal)
         else:
-            return create_episode(series_id, season_id, title, series_ordinal, season_ordinal, dry)
+            episode_id = create_episode(series_id, season_id, title, series_ordinal, season_ordinal, dry)
+            episode_ids.append(episode_id)
+
+    return episode_ids
