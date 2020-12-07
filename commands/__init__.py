@@ -2,3 +2,4 @@
 from .create_episodes import create_episodes
 from .create_seasons import create_seasons
 from .list_episodes import list_episodes
+from .check_tv_show import check_tv_show
