@@ -190,5 +190,13 @@ class RepoUtils:
                 successes += 1
         return (successes, failures)
 
+    def new_item(self, labels, descriptions) -> ItemPage:
+        item = ItemPage(self.repo)
+        if labels:
+            item.editLabels(labels, summary="Setting label")
+        if descriptions:
+            item.editDescriptions(descriptions, summary="Setting description")
+        return item
+
     def new_claim(self, prop):
         return Claim(self.repo, prop)
