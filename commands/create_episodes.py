@@ -1,17 +1,20 @@
 import csv
 
+from pywikibot import ItemPage, Site
+
 import properties.wikidata_properties as wp
-from pywikibot import Claim, ItemPage, Site
 from utils import RepoUtils
+from .errors import SuspiciousTitlesError
 
 
 def read_titles(filepath):
     with open(filepath, "r") as f:
         reader = csv.reader(f)
-        return [s for s in reader]
+        return list(reader)
 
 
 def create_episode_quickstatements(series_id, season_id, title, series_ordinal, season_ordinal):
+    """Prints out QuickStatements that can be used to create an episode item on WikiData"""
     print("CREATE")
     print(f'LAST|Len|"{title}"')
     print(f"LAST|{wp.INSTANCE_OF.pid}|{wp.TELEVISION_SERIES_EPISODE}")
@@ -97,8 +100,16 @@ def create_episode(series_id, season_id, title, series_ordinal, season_ordinal, 
     return episode.getID() if episode is not None else "Q-1"
 
 
-def create_episodes(series_id, season_id, titles_file, quickstatements=False, dry=False):
+def create_episodes(series_id, season_id, titles_file, quickstatements=False, dry=False, confirm_titles=False):
     titles = read_titles(titles_file)
+
+    maybe_erroneous_titles = check_erroneous_titles(titles)
+    if maybe_erroneous_titles and not confirm_titles:
+        raise SuspiciousTitlesError(
+            "The following titles have an uncommon character in them: \n"
+            + "\n".join([" * {t}" for t in maybe_erroneous_titles])
+        )
+
     episode_ids = []
     for series_ordinal, season_ordinal, title in titles:
         if quickstatements:
@@ -108,3 +119,12 @@ def create_episodes(series_id, season_id, titles_file, quickstatements=False, dr
             episode_ids.append(episode_id)
 
     return episode_ids
+
+def check_erroneous_titles(titles):
+    uncommon_chars = set("[", "]")
+    maybe_erroneous_titles = [
+        title
+        for title in titles
+        if any(c in title for c in uncommon_chars)
+    ]
+    return maybe_erroneous_titles

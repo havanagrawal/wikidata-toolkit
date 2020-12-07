@@ -1,11 +1,12 @@
-from pywikibot import Claim, ItemPage, Site
-from pywikibot.data.api import Request
+from tqdm import tqdm
+from pywikibot import ItemPage, Site
 
 import properties.wikidata_properties as wp
 from utils import RepoUtils
 
 
 def create_season_quickstatements(series_id, label, descr, ordinal):
+    """Prints out QuickStatements that can be used to create a season item on WikiData"""
     print("CREATE")
     print(f'LAST|Len|"{label}"')
     print(f'LAST|Den|"{descr}"')
@@ -68,11 +69,32 @@ def create_season(series_id: str, label: str, descr: str, ordinal: int, dry: boo
 
 
 def create_seasons(series_id, number_of_seasons, quickstatements=False, dry=False):
+    """Creates multiple season items on WikiData
+
+    Arguments
+    ---------
+    series_id: str
+        The Wiki ID of the series ItemPage
+    number_of_seasons: int
+        The number of season to create for this series
+    quickstatements: bool
+        if True, simply print out a list of quickstatements.
+        if False, then create the items on WikiData directly
+    dry: bool
+        Whether or not this function should run in dry-run mode.
+        In dry-run mode, no real changes are made to WikiData, they are only
+        logged to stdout.
+
+    Returns
+    -------
+    season_ids: List[str]
+        The Wiki IDs of the seasons that were created
+    """
     series_title = ItemPage(Site().data_repository(), series_id)
     series_title.get(force=True)
     series_label = series_title.labels['en']
     season_ids = []
-    for i in range(1, number_of_seasons + 1):
+    for i in tqdm(range(1, number_of_seasons + 1)):
         label = f"{series_label}, season {i}"
         descr = f"season {i} of {series_label}"
         if quickstatements:
@@ -81,8 +103,4 @@ def create_seasons(series_id, number_of_seasons, quickstatements=False, dry=Fals
             season_id = create_season(series_id, label, descr, i, dry)
             season_ids.append(season_id)
 
-    # Easier to pipe through to other scripts
-    print("\n".join(season_ids))
-
     return season_ids
-

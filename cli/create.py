@@ -22,7 +22,11 @@ def create(series_id, titles_dir, dry=False):
     episode_ids = []
 
     for season_file, season_id in zip(files, season_ids):
-        e_ids = commands.create_episodes(series_id, season_id, season_file, dry=dry)
+        try:
+            e_ids = commands.create_episodes(series_id, season_id, season_file, dry=dry)
+        except commands.errors.SuspiciousTitlesError as e:
+            click.confirm(f"An error occurred when reading the CSV file:\n{e.message}\nDo you want to continue?", abort=True)
+            e_ids = commands.create_episodes(series_id, season_id, season_file, dry=dry, confirm_titles=True)
         episode_ids.extend(e_ids)
 
     # Sleep for a few seconds to let the data be persisted in WikiData

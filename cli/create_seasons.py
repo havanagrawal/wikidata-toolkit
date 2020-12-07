@@ -1,9 +1,7 @@
 import click
-import commands
-import properties.wikidata_properties as wp
 from pywikibot import Site
-from utils import RepoUtils
 
+import commands
 from .click_utils import validate_item_id
 
 
