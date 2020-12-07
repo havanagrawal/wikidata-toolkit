@@ -28,14 +28,15 @@ class ConstraintCheckerBot(WikidataBot):
 
     use_from_page = False
 
-    def __init__(self, generator, factory=Factory(), **kwargs):
+    def __init__(self, generator, factory=Factory(), verbose=False, **kwargs):
         super().__init__(generator=generator, **kwargs)
         self.factory = factory
+        self.verbose = verbose
 
     def print_failures(self, typed_item: BaseType, failed_constraints):
         """Print failed constraints"""
         for constraint in failed_constraints:
-            botlogging.error(f"{constraint} failed for {typed_item}")
+            botlogging.output(f"{constraint} failed for {typed_item}", toStdout=True)
 
     def print_successes(self, typed_item: BaseType, passed_constraints):
         """Print passed constraints"""
@@ -60,8 +61,9 @@ class ConstraintCheckerBot(WikidataBot):
             else:
                 not_satisfied.append(constraint)
 
-        self.print_failures(typed_item, not_satisfied)
-        self.print_successes(typed_item, satisfied)
+        if self.verbose:
+            self.print_failures(typed_item, not_satisfied)
+            self.print_successes(typed_item, satisfied)
 
         total = len(typed_item.constraints)
         failures = len(not_satisfied)
@@ -102,7 +104,7 @@ class ConstraintFixerBot(ConstraintCheckerBot):
             success = fix.apply(self.user_add_claim)
             fixed += success
         total = len(not_satisfied)
-        botlogging.output(f"Fixed {fixed}/{total} constraint failures")
+        botlogging.output(f"Fixed {fixed}/{total} constraint failures", toStdout=True)
 
 
 class AccumulatingConstraintFixerBot(ConstraintCheckerBot):
